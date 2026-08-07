@@ -1,0 +1,21 @@
+# Per-image role tagging for this niche's image pool.
+# role: host  -> camera-facing / hook-appropriate, eligible for slide 1 of any piece
+# role: pool  -> general content, used for slides 2+
+#
+# image_selector.py reads this file first; falls back to prefix inference
+# (files matching "aura-*" => host, everything else => pool) if a manifest
+# is missing entirely for a niche. Keep this file as the source of truth
+# once a niche has one, since prefixes are just a convenience default for
+# niches that haven't been manually tagged yet.
+
+images:
+  aura-1.png: {role: host}
+  aura-2.png: {role: host}
+  aura-3.png: {role: host}
+  aura-4.png: {role: host}
+  haircut-1.png: {role: pool}
+  haircut-2.png: {role: pool}
+  haircut-3.png: {role: pool}
+  haircut-4.png: {role: pool}
+  haircut-5.png: {role: pool}
+  washing-1.png: {role: pool}

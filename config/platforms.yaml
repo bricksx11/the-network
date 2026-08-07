@@ -1,0 +1,64 @@
+# Per-platform behavior, encoding specs, and endpoints. Values here are what publish/*.py
+# modules should read from rather than hardcode, once those modules are built (blocked on
+# real credentials -- see task "[Needs user] Provision external accounts/credentials").
+#
+# IMPORTANT: dimension/duration/rate-limit figures below are what was confirmed true at
+# planning time. Per the plan's open-risks list, these shift over time -- re-verify against
+# each platform's live docs before the corresponding publish/*.py module goes live, don't
+# trust this file blindly months from now.
+
+instagram:
+  content_formats: [carousel, video] # both auto-published directly, no manual step
+  carousel:
+    max_images: 10
+    image_size: [1080, 1350] # 4:5, matches render/carousel.py CANVAS_SIZE
+    supports_audio: false # hard platform limit, confirmed -- no API path exists, at all
+  video:
+    size: [1080, 1920] # 9:16, matches render/video.py VIDEO_SIZE
+    supports_audio: true # audio baked into the file itself, not via an API audio field
+  publish_flow: graph_api_container_then_publish
+  api_base: https://graph.facebook.com # version pinned at build time, not here
+  rate_limit_note: "~25 publishes/24h historically per account -- 2/day is comfortably under this"
+  requires:
+    - "IG account converted to Business or Creator type"
+    - "linked to a Facebook Page"
+
+facebook:
+  content_formats: [carousel] # video/ffmpeg format is Instagram/YouTube only, not Facebook
+  carousel:
+    image_size: [1080, 1350]
+    supports_audio: false # not attempted here -- not a native FB carousel pattern anyway
+  publish_flow: graph_api_page_feed # /{page-id}/photos (unpublished) then /{page-id}/feed
+  api_base: https://graph.facebook.com
+  requires:
+    - "Facebook Page (same one linked to the Instagram Business account is fine)"
+
+tiktok:
+  content_formats: [carousel] # photo/carousel mode only, never the ffmpeg video
+  carousel:
+    max_images: 10
+    image_size: [1080, 1350] # verify against TikTok's actual accepted dims during the Phase 5 spike
+    supports_audio: true # via the native in-app picker only, after landing in drafts
+  publish_flow: content_posting_api_upload_to_inbox # NOT direct_post -- lands in drafts, not published
+  api_base: https://open.tiktokapis.com
+  maturity_note: >
+    Least-documented integration of the four. Do not build the real publish/tiktok.py
+    module until a standalone spike (Phase 5) confirms current param names and that
+    photo-mode FILE_UPLOAD actually lands content in native drafts as expected.
+  requires:
+    - "Registered TikTok developer app"
+    - "refresh token rotates on every use -- pipeline must write the new one back to GH Secrets every run"
+
+youtube:
+  content_formats: [video] # ffmpeg video only -- native carousel exists in-app but has zero public API
+  video:
+    size: [1080, 1920]
+    supports_audio: true
+  publish_flow: data_api_v3_videos_insert_private
+  api_base: https://www.googleapis.com/upload/youtube/v3
+  cta_default_override: "Link in bio" # comment-then-DM funnel isn't a native YouTube pattern
+  quota_note: "videos.insert costs 1600 units against a 10000/day default quota (~6 uploads/day)"
+  requires:
+    - "Google Cloud project + OAuth consent screen"
+    - "one-time local OAuth consent to mint the refresh token"
+    - "confirm whether Testing-mode token expiry forces Production verification for youtube.upload scope"

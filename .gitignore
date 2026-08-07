@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.egg-info/
+.pytest_cache/
+.DS_Store
+node_modules/
+cloudflare-worker/dist/
+cloudflare-worker/.wrangler/
+# rendered daily output lives on a separate scratch branch, never on main
+render_output/

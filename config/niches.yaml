@@ -1,0 +1,39 @@
+# One entry per avatar/niche. Adding a new niche is meant to be mostly config, not new code
+# (see plan's Phase 6 "Scale out") -- once Barber is proven end-to-end on all four platforms,
+# copy this block, point image_dir at a populated assets/avatars/<Niche>/marketing/ folder
+# (with its own manifest.yaml), and fill in that niche's platform account IDs.
+#
+# account IDs / page IDs are placeholders (null) until the corresponding accounts exist and
+# are converted to Business/Creator type + credentials are provisioned -- see task
+# "[Needs user] Provision external accounts/credentials". The pipeline should refuse to run
+# for a niche/platform combination where the relevant ID is still null, rather than silently
+# skipping it.
+
+niches:
+  Barber:
+    image_dir: assets/avatars/Barber/marketing
+    trend_seed_keyword: "barber business"
+    platforms:
+      instagram:
+        enabled: true
+        business_account_id: null # Meta Graph API IG Business Account ID
+      facebook:
+        enabled: true
+        page_id: null # Meta Graph API Facebook Page ID
+      tiktok:
+        enabled: true
+        creator_open_id: null # TikTok Content Posting API open_id for this account
+      youtube:
+        enabled: true
+        channel_id: null # YouTube channel ID; refresh token lives in the NICHE_CREDS secret, not here
+        cta_override: "Link in bio" # replaces the default comment-bait CTA for this platform only
+
+  # DogGroomer:
+  #   image_dir: assets/avatars/DogGroomer/marketing
+  #   trend_seed_keyword: "dog groomer business"
+  #   platforms: { ... same shape as Barber ... }
+
+  # CarDetailer:
+  #   image_dir: assets/avatars/CarDetailer/marketing
+  #   trend_seed_keyword: "car detailing business"
+  #   platforms: { ... same shape as Barber ... }
