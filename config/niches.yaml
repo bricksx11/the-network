@@ -19,7 +19,7 @@ niches:
         business_account_id: null # Meta Graph API IG Business Account ID
       facebook:
         enabled: true
-        page_id: null # Meta Graph API Facebook Page ID
+        page_id: "1227801577088727" # "Aiden Barber" Page, confirmed via me/accounts
       tiktok:
         enabled: true
         creator_open_id: null # TikTok Content Posting API open_id for this account
