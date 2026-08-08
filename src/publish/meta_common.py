@@ -69,8 +69,12 @@ def _raise_for_graph_error(response: requests.Response) -> None:
     )
 
 
-def graph_post(path: str, access_token: str, **params) -> dict:
-    response = requests.post(f"{GRAPH_API_BASE}/{path}", data={**params, "access_token": access_token})
+def graph_post(path: str, access_token: str, extra_params: Optional[dict] = None, **params) -> dict:
+    """extra_params exists alongside **params for keys that aren't valid Python identifiers
+    (e.g. Facebook's `attached_media[0]` array-style form field names).
+    """
+    body = {**params, **(extra_params or {}), "access_token": access_token}
+    response = requests.post(f"{GRAPH_API_BASE}/{path}", data=body)
     _raise_for_graph_error(response)
     return response.json()
 
