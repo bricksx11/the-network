@@ -1,0 +1,14 @@
+name = "the-network-trigger"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# Debounce state (ignore accidental double-taps within DEBOUNCE_WINDOW_S). Create with:
+#   wrangler kv namespace create DEBOUNCE_KV
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "DEBOUNCE_KV"
+id = "REPLACE_WITH_REAL_KV_NAMESPACE_ID"
+
+# Secrets (never committed -- set via `wrangler secret put <NAME>`):
+#   TRIGGER_SECRET  -- shared secret the phone Shortcut must present
+#   GITHUB_PAT      -- repo-scoped PAT, permission to fire repository_dispatch on this repo
