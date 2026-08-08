@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.orchestrator import publish_niche
+from src.orchestrator import publish_niche, run_niche
 from src.research_gate import Script
 
 
@@ -150,3 +150,52 @@ def test_publish_niche_does_not_host_anything_when_no_platform_needs_it(mocker, 
 
     publish_niche("Barber", niche_config, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script())
     mock_host.assert_not_called()
+
+
+def _mock_render_pipeline(mocker, tmp_path):
+    """Mocks everything upstream of publish_niche so these tests exercise only run_niche's
+    publish=True/False branching, not rendering itself (already covered elsewhere).
+    """
+    mocker.patch("src.orchestrator.get_todays_script", return_value=make_script())
+    mocker.patch(
+        "src.orchestrator.run_research_gate",
+        return_value=mocker.MagicMock(shape="money_reveal", trend_signal=None),
+    )
+    fake_image = mocker.MagicMock()
+    fake_image.path = tmp_path / "aura-1.png"
+    mocker.patch("src.orchestrator.select_images", return_value=[fake_image] * 4)
+    # must live under out_dir (tmp_path/"out") to match what real run_niche passes as
+    # out_dir, since the code computes paths relative to it for the run log
+    carousel_paths = [tmp_path / "out" / f"slide-{i}.png" for i in range(4)]
+    mocker.patch("src.orchestrator.render_carousel", return_value=carousel_paths)
+    mocker.patch("src.orchestrator.render_video")
+    mocker.patch("src.orchestrator.find_music_track", return_value=tmp_path / "track.mp3")
+
+
+def test_run_niche_publish_false_skips_publishing(mocker, tmp_path):
+    # LOGS_DIR and REPO_ROOT are module-level constants tied to the real repo path --
+    # patch both so this test never touches the real repo and relative_to() calls against
+    # fake tmp_path files succeed.
+    mocker.patch("src.orchestrator.LOGS_DIR", tmp_path / "logs")
+    mocker.patch("src.orchestrator.REPO_ROOT", tmp_path)
+    _mock_render_pipeline(mocker, tmp_path)
+    mock_publish = mocker.patch("src.orchestrator.publish_niche")
+
+    record = run_niche("Barber", tmp_path / "out", publish=False)
+
+    mock_publish.assert_not_called()
+    assert "publish_results" not in record
+
+
+def test_run_niche_publish_true_calls_publish_and_merges_results(mocker, tmp_path):
+    mocker.patch("src.orchestrator.LOGS_DIR", tmp_path / "logs")
+    mocker.patch("src.orchestrator.REPO_ROOT", tmp_path)
+    _mock_render_pipeline(mocker, tmp_path)
+    mocker.patch(
+        "src.orchestrator.publish_niche",
+        return_value={"instagram": {"carousel_post_id": "abc"}},
+    )
+
+    record = run_niche("Barber", tmp_path / "out", publish=True)
+
+    assert record["publish_results"] == {"instagram": {"carousel_post_id": "abc"}}

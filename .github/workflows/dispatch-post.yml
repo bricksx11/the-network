@@ -1,0 +1,17 @@
+name: dispatch-post
+
+# Triggered by the Cloudflare Worker (the phone-shortcut trigger, not SMS/Twilio -- see the
+# plan) via GitHub's repository_dispatch API. client_payload.scope lets the trigger target
+# "all" niches or a single one; defaults to "all" if not provided.
+on:
+  repository_dispatch:
+    types: [sms-trigger] # legacy name from an earlier design (SMS/Twilio) -- kept as-is
+    # to avoid needing to also update the Worker's dispatch call in lockstep; it's just an
+    # event-type label at this point, not a statement about the actual trigger mechanism.
+
+jobs:
+  run:
+    uses: ./.github/workflows/_pipeline.yml
+    with:
+      scope: ${{ github.event.client_payload.scope || 'all' }}
+    secrets: inherit

@@ -80,7 +80,11 @@ def build_slide_texts(script, platform: str | None = None) -> list[SlideText]:
     return slides
 
 
-def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None) -> dict:
+def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None, publish: bool = True) -> dict:
+    """Render (always) and publish (by default). `publish=False` is for local dev/testing
+    without needing any platform credentials set -- matches how this was verified end to
+    end locally before any API wiring existed.
+    """
     rng = rng or random.Random()
     niche_config = load_niche_config(niche)
     image_dir = REPO_ROOT / niche_config["image_dir"]
@@ -108,6 +112,9 @@ def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None) -> di
         "carousel_output": [str(p.relative_to(out_dir)) for p in carousel_paths],
         "video_output": str(video_path.relative_to(out_dir)),
     }
+
+    if publish:
+        run_record["publish_results"] = publish_niche(niche, niche_config, carousel_paths, video_path, script)
 
     LOGS_DIR.mkdir(exist_ok=True)
     log_path = LOGS_DIR / f"{niche}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json"

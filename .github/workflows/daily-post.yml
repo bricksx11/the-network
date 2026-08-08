@@ -1,0 +1,14 @@
+name: daily-post
+
+on:
+  schedule:
+    # Twice daily. Cron is UTC -- there's DST drift relative to local time across the year,
+    # acceptable for organic posting cadence (doesn't need to be minute-precise).
+    - cron: "0 9 * * *"
+    - cron: "0 18 * * *"
+  workflow_dispatch: {} # manual trigger from the Actions tab, for testing without waiting on cron
+
+jobs:
+  run:
+    uses: ./.github/workflows/_pipeline.yml
+    secrets: inherit
