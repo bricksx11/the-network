@@ -26,8 +26,11 @@ from src.render.carousel import SlideText, render_background, render_text_overla
 
 VIDEO_SIZE = (1080, 1920)  # 9:16 vertical -- Reels/Shorts/TikTok
 FPS = 30
-SEGMENT_DURATION_S = 3.0  # time each slide is fully "on screen" before the next transition
-XFADE_DURATION_S = 0.6  # crossfade length between consecutive slides
+# 2.0s per slide: researched, not guessed -- short-form retention studies converge on a
+# visual change every 2-3s as the pacing sweet spot, with static shots beyond ~4s becoming
+# a "danger zone" where viewers scroll away. Matches the explicit 2s-max requirement too.
+SEGMENT_DURATION_S = 2.0
+XFADE_DURATION_S = 0.4  # crossfade length between consecutive slides (kept well under 2.0s)
 ZOOM_PER_FRAME = 0.0015
 MAX_ZOOM = 1.15
 AUDIO_FADE_OUT_S = 1.0

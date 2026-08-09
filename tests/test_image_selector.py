@@ -50,7 +50,7 @@ def test_select_images_raises_when_count_exceeds_pool(tmp_path):
     (niche_dir / "aura-1.png").write_bytes(b"fake")
     (niche_dir / "haircut-1.png").write_bytes(b"fake")
 
-    with pytest.raises(ImageSelectorError, match="only 2 image"):
+    with pytest.raises(ImageSelectorError, match="only 2 general-rotation image"):
         select_images(niche_dir, count=5)
 
 
@@ -62,6 +62,28 @@ def test_select_images_raises_when_no_host_images(tmp_path):
 
     with pytest.raises(ImageSelectorError, match="no host-role"):
         select_images(niche_dir, count=2)
+
+
+def test_product_role_images_are_listed_but_never_selected(tmp_path):
+    niche_dir = tmp_path / "marketing"
+    niche_dir.mkdir()
+    (niche_dir / "aura-1.png").write_bytes(b"fake")
+    (niche_dir / "haircut-1.png").write_bytes(b"fake")
+    (niche_dir / "razor-product.png").write_bytes(b"fake")
+    (niche_dir / "manifest.yaml").write_text(
+        "images:\n"
+        "  aura-1.png: {role: host}\n"
+        "  haircut-1.png: {role: pool}\n"
+        "  razor-product.png: {role: product}\n"
+    )
+
+    assets = list_niche_images(niche_dir)
+    assert {a.path.name for a in assets} == {"aura-1.png", "haircut-1.png", "razor-product.png"}
+
+    rng = random.Random(0)
+    for _ in range(10):
+        chosen = select_images(niche_dir, count=2, rng=rng)
+        assert "razor-product.png" not in {a.path.name for a in chosen}
 
 
 def test_manifest_role_overrides_prefix_inference(tmp_path):

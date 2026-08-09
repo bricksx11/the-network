@@ -64,6 +64,27 @@ def test_strip_unsupported_glyphs_removes_emoji_but_keeps_text():
     assert _strip_unsupported_glyphs("No emoji here.") == "No emoji here."
 
 
+def test_headline_renders_as_white_box_with_dark_text(tmp_path):
+    """Locks in the actual visual style (white rounded box, black text inside) with a real
+    pixel check -- not just "doesn't crash" -- since this is a deliberate, specific design
+    requirement, not an implementation detail.
+    """
+    images = select_images(BARBER_DIR, count=1)
+    out_path = render_slide(images[0].path, SlideText(headline="Hook"), tmp_path / "slide-1.png")
+
+    with Image.open(out_path) as img:
+        width, height = img.size
+        zone_top = int(height * (1 - 0.42))  # matches TEXT_ZONE_HEIGHT_FRACTION
+        band = img.crop((0, zone_top, width, zone_top + 120))
+        pixels = list(band.getdata())
+
+        near_white = [p for p in pixels if min(p[:3]) > 240]
+        near_black = [p for p in pixels if max(p[:3]) < 60]
+
+        assert near_white, "expected white box pixels in the headline's safe zone"
+        assert near_black, "expected dark text pixels in the headline's safe zone"
+
+
 def test_render_carousel_raises_on_mismatched_lengths(tmp_path):
     images = select_images(BARBER_DIR, count=3)
     texts = [SlideText(headline="only one")]

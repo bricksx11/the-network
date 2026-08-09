@@ -1,13 +1,22 @@
 """Pick images for one piece of content (one carousel or one video) for a given niche.
 
 Rules (see plan): slide 1 must come from the "host" role (camera-facing/hook-appropriate);
-the remaining slides are sampled from the rest of the pool without replacement, so a single
-piece of content never repeats an image. Reuse of the same image across *different* days/pieces
-is fine, so this is a pure, stateless function -- no "already used" tracking anywhere.
+the remaining slides are sampled from the rest of the general pool without replacement, so a
+single piece of content never repeats an image. Reuse of the same image across *different*
+days/pieces is fine, so this is a pure, stateless function -- no "already used" tracking
+anywhere.
+
+Three roles: "host" (slide 1 candidates), "pool" (general rotation, slides 2+), and
+"product" (a specific product being held/shown -- e.g. a razor or shears -- locked out of
+the default general-rotation pool since it's only appropriate for a dedicated post about
+that exact product, not every post). An image explicitly meant to be usable in any post
+despite depicting a product (e.g. the app itself) should be tagged "pool", not "product".
 
 Role source of truth is manifest.yaml if the niche has one; otherwise falls back to inferring
 from filename prefix ("aura-*" => host, everything else => pool), matching the existing
-convention already used in the image library.
+convention already used in the image library. Prefix inference never infers "product" --
+that role must be set explicitly in a manifest, since guessing wrong here would leak a
+locked product image into general rotation.
 """
 
 from __future__ import annotations
@@ -18,7 +27,8 @@ from pathlib import Path
 
 import yaml
 
-VALID_ROLES = ("host", "pool")
+VALID_ROLES = ("host", "pool", "product")
+GENERAL_ROTATION_ROLES = ("host", "pool")
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 HOST_PREFIX_DEFAULT = "aura-"
 
@@ -30,7 +40,7 @@ class ImageSelectorError(Exception):
 @dataclass(frozen=True)
 class ImageAsset:
     path: Path
-    role: str  # "host" | "pool"
+    role: str  # "host" | "pool" | "product"
 
     def __post_init__(self) -> None:
         if self.role not in VALID_ROLES:
@@ -93,15 +103,18 @@ def select_images(
     """Select `count` images for one piece of content.
 
     Slide 1 (index 0) is always a "host" image; the remaining `count - 1` are sampled from
-    the rest of the pool (host + pool, minus whatever was already picked) without replacement.
-    Raises ImageSelectorError if there's no host image, or not enough total images to fill
-    `count` slots without repeating one within this single piece.
+    the rest of the general-rotation pool (host + pool, minus whatever was already picked)
+    without replacement. "product"-role images are never selected here -- they're locked to
+    dedicated posts about that specific product, not general rotation. Raises
+    ImageSelectorError if there's no host image, or not enough general-rotation images to
+    fill `count` slots without repeating one within this single piece.
     """
     if count < 1:
         raise ValueError("count must be >= 1")
 
     rng = rng or random.Random()
-    assets = list_niche_images(niche_marketing_dir)
+    all_assets = list_niche_images(niche_marketing_dir)
+    assets = [a for a in all_assets if a.role in GENERAL_ROTATION_ROLES]
 
     hosts = [a for a in assets if a.role == "host"]
     if not hosts:
@@ -112,8 +125,8 @@ def select_images(
 
     if len(assets) < count:
         raise ImageSelectorError(
-            f"{niche_marketing_dir} has only {len(assets)} image(s), need {count} to avoid "
-            f"repeating an image within one piece of content"
+            f"{niche_marketing_dir} has only {len(assets)} general-rotation image(s), need "
+            f"{count} to avoid repeating an image within one piece of content"
         )
 
     slide_one = rng.choice(hosts)

@@ -3,11 +3,16 @@ no AI image generation involved, so there's no risk of the garbled/misplaced tex
 came up repeatedly when this was being done by hand through an image-generation model.
 
 Design decision that replaces the manual "text must not overlap the face" instruction we
-kept having to give an image model: text always lives in a fixed bottom-anchored zone with
-a dark gradient scrim behind it. Since placement is fully deterministic here (we're drawing
-pixels, not asking a model to improvise layout), there's no face-overlap failure mode to
-guard against at all -- the zone is chosen to sit well clear of where a subject's face
-normally falls in these photos.
+kept having to give an image model: text always lives in a fixed bottom-anchored zone.
+Since placement is fully deterministic here (we're drawing pixels, not asking a model to
+improvise layout), there's no face-overlap failure mode to guard against at all -- the zone
+is chosen to sit well clear of where a subject's face normally falls in these photos.
+
+Text style: a white rounded-rectangle box sized to fit its own text, black bold text inside
+-- the "handmade caption" look (per a reference example), not a translucent gradient scrim
+with white text. This also means the box reads cleanly against any photo regardless of how
+busy/bright it is, since it's fully opaque rather than relying on darkening the photo
+underneath for contrast.
 """
 
 from __future__ import annotations
@@ -45,14 +50,21 @@ DEFAULT_FONT_PATH = REPO_ROOT / "assets" / "fonts" / "Inter.ttf"
 
 CANVAS_SIZE = (1080, 1350)  # 4:5, Instagram/TikTok/Facebook carousel portrait
 MARGIN = 72  # generous padding from every edge -- text must never sit flush against a side
-SCRIM_HEIGHT_FRACTION = 0.42  # bottom ~42% of the canvas carries the text zone
+TEXT_ZONE_HEIGHT_FRACTION = 0.42  # bottom ~42% of the canvas is the safe zone for text boxes
 HEADLINE_WEIGHT = 800
-SUBTEXT_WEIGHT = 500
-CORNER_WEIGHT = 600
-HEADLINE_SIZE = 58
-SUBTEXT_SIZE = 38
-CORNER_SIZE = 30
+SUBTEXT_WEIGHT = 600
+CORNER_WEIGHT = 700
+HEADLINE_SIZE = 54
+SUBTEXT_SIZE = 34
+CORNER_SIZE = 26
 LINE_SPACING = 1.18
+
+BOX_FILL = (255, 255, 255, 255)
+BOX_TEXT_FILL = (10, 10, 10, 255)
+BOX_RADIUS = 22
+BOX_PAD_X = 26
+BOX_PAD_Y = 18
+BOX_GAP = 18  # vertical gap between stacked boxes (headline -> subtext, etc.)
 
 
 def _load_font(size: int, weight: int) -> ImageFont.FreeTypeFont:
@@ -93,22 +105,40 @@ def _wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFon
     return lines
 
 
-def _draw_wrapped_block(
+def _draw_boxed_text_block(
     draw: ImageDraw.ImageDraw,
     text: str,
     font: ImageFont.FreeTypeFont,
     top: int,
-    max_width: int,
-    fill: tuple[int, int, int, int],
+    canvas_width: int,
+    max_text_width: int,
 ) -> int:
-    """Draw word-wrapped text starting at `top`, return the y-coordinate just below it."""
-    lines = _wrap_text(draw, text, font, max_width)
+    """Draw a white rounded-rectangle box sized to fit `text` (word-wrapped, centered), with
+    black bold text inside -- the "handmade caption" look. Box is horizontally centered on
+    the canvas. Returns the y-coordinate just below the box (for stacking the next one).
+    """
+    lines = _wrap_text(draw, text, font, max_text_width)
+    if not lines:
+        return top
+
     line_height = int(font.size * LINE_SPACING)
-    y = top
-    for line in lines:
-        draw.text((MARGIN, y), line, font=font, fill=fill)
+    line_widths = [draw.textbbox((0, 0), line, font=font)[2] for line in lines]
+    block_width = max(line_widths)
+    block_height = line_height * len(lines)
+
+    box_left = (canvas_width - block_width) // 2 - BOX_PAD_X
+    box_right = (canvas_width + block_width) // 2 + BOX_PAD_X
+    box_top = top
+    box_bottom = top + block_height + 2 * BOX_PAD_Y
+    draw.rounded_rectangle((box_left, box_top, box_right, box_bottom), radius=BOX_RADIUS, fill=BOX_FILL)
+
+    y = box_top + BOX_PAD_Y
+    for line, line_width in zip(lines, line_widths):
+        x = (canvas_width - line_width) // 2
+        draw.text((x, y), line, font=font, fill=BOX_TEXT_FILL)
         y += line_height
-    return y
+
+    return box_bottom
 
 
 @dataclass(frozen=True)
@@ -120,7 +150,7 @@ class SlideText:
 
 
 def render_background(image_path: Path, canvas_size: tuple[int, int] = CANVAS_SIZE) -> Image.Image:
-    """Just the cover-cropped photo, no text/scrim. video.py uses this as the layer that
+    """Just the cover-cropped photo, no text. video.py uses this as the layer that
     gets Ken Burns motion applied -- kept separate from the text layer so panning/zooming
     the photo never distorts or jitters the text sitting on top of it.
     """
@@ -129,7 +159,7 @@ def render_background(image_path: Path, canvas_size: tuple[int, int] = CANVAS_SI
 
 
 def render_text_overlay_layer(text: SlideText, canvas_size: tuple[int, int] = CANVAS_SIZE) -> Image.Image:
-    """The scrim + headline/subtext/corner labels only, as a transparent RGBA layer sized
+    """The headline/subtext/corner label boxes only, as a transparent RGBA layer sized
     to `canvas_size`. Used both to flatten onto a static carousel slide (render_slide) and,
     unflattened, as the fixed overlay layer composited on top of a moving Ken-Burns
     background in video.py.
@@ -141,34 +171,42 @@ def render_text_overlay_layer(text: SlideText, canvas_size: tuple[int, int] = CA
     corner_right = _strip_unsupported_glyphs(text.corner_right) if text.corner_right else None
 
     layer = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
 
-    scrim_top = int(height * (1 - SCRIM_HEIGHT_FRACTION))
-    scrim_draw = ImageDraw.Draw(layer)
-    zone_height = height - scrim_top
-    for y in range(scrim_top, height):
-        progress = (y - scrim_top) / zone_height
-        alpha = int(190 * progress**1.4)
-        scrim_draw.line([(0, y), (width, y)], fill=(0, 0, 0, alpha))
-
+    zone_top = int(height * (1 - TEXT_ZONE_HEIGHT_FRACTION))
     max_text_width = width - 2 * MARGIN
-    white = (255, 255, 255, 255)
 
-    y = scrim_top + int(zone_height * 0.22)
-    y = _draw_wrapped_block(scrim_draw, headline, _load_font(HEADLINE_SIZE, HEADLINE_WEIGHT), y, max_text_width, white)
+    y = zone_top
+    y = _draw_boxed_text_block(draw, headline, _load_font(HEADLINE_SIZE, HEADLINE_WEIGHT), y, width, max_text_width)
 
     if subtext:
-        y += 14
-        _draw_wrapped_block(scrim_draw, subtext, _load_font(SUBTEXT_SIZE, SUBTEXT_WEIGHT), y, max_text_width, white)
+        y += BOX_GAP
+        _draw_boxed_text_block(draw, subtext, _load_font(SUBTEXT_SIZE, SUBTEXT_WEIGHT), y, width, max_text_width)
 
     corner_font = _load_font(CORNER_SIZE, CORNER_WEIGHT)
-    bottom_y = height - MARGIN - CORNER_SIZE
+    corner_top = height - MARGIN - CORNER_SIZE - 2 * BOX_PAD_Y
     if corner_left:
-        scrim_draw.text((MARGIN, bottom_y), corner_left, font=corner_font, fill=white)
+        _draw_left_boxed_text(draw, corner_left, corner_font, MARGIN, corner_top)
     if corner_right:
-        w = scrim_draw.textbbox((0, 0), corner_right, font=corner_font)[2]
-        scrim_draw.text((width - MARGIN - w, bottom_y), corner_right, font=corner_font, fill=white)
+        _draw_right_boxed_text(draw, corner_right, corner_font, width - MARGIN, corner_top)
 
     return layer
+
+
+def _draw_left_boxed_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, left: int, top: int) -> None:
+    """Small white-box label anchored by its left edge (bottom-left corner label)."""
+    width = draw.textbbox((0, 0), text, font=font)[2]
+    box = (left - BOX_PAD_X, top, left + width + BOX_PAD_X, top + font.size + 2 * BOX_PAD_Y)
+    draw.rounded_rectangle(box, radius=BOX_RADIUS, fill=BOX_FILL)
+    draw.text((left, top + BOX_PAD_Y), text, font=font, fill=BOX_TEXT_FILL)
+
+
+def _draw_right_boxed_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, right: int, top: int) -> None:
+    """Small white-box label anchored by its right edge (bottom-right corner label)."""
+    width = draw.textbbox((0, 0), text, font=font)[2]
+    box = (right - width - BOX_PAD_X, top, right + BOX_PAD_X, top + font.size + 2 * BOX_PAD_Y)
+    draw.rounded_rectangle(box, radius=BOX_RADIUS, fill=BOX_FILL)
+    draw.text((right - width, top + BOX_PAD_Y), text, font=font, fill=BOX_TEXT_FILL)
 
 
 def render_slide(image_path: Path, text: SlideText, out_path: Path, canvas_size: tuple[int, int] = CANVAS_SIZE) -> Path:

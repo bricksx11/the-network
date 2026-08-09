@@ -1,21 +1,38 @@
 # Per-image role tagging for this niche's image pool.
-# role: host  -> camera-facing / hook-appropriate, eligible for slide 1 of any piece
-# role: pool  -> general content, used for slides 2+
+# role: host    -> camera-facing / hook-appropriate, eligible for slide 1 of any piece.
+#                  Research-backed, not just a naming convention: short-form retention
+#                  research consistently finds facial expression + confident framing in the
+#                  opening frame drives 3-second retention -- these "aura" images fit that.
+# role: pool    -> general content, used for slides 2+, freely mixed into any post.
+# role: product -> a specific product being held/shown (e.g. a razor or shears). Locked out
+#                  of general rotation entirely -- only appropriate for a dedicated post
+#                  about that exact product ("products every barber needs" style), never a
+#                  random slide in an unrelated post. An image that depicts a product but IS
+#                  meant to be usable anywhere (the Bizyr app itself) is tagged pool instead.
 #
 # image_selector.py reads this file first; falls back to prefix inference
 # (files matching "aura-*" => host, everything else => pool) if a manifest
-# is missing entirely for a niche. Keep this file as the source of truth
-# once a niche has one, since prefixes are just a convenience default for
-# niches that haven't been manually tagged yet.
+# is missing entirely for a niche -- inference never produces "product", since guessing
+# wrong there would leak a locked product image into general rotation. Keep this file as
+# the source of truth once a niche has one.
 
 images:
   aura-1.png: {role: host}
   aura-2.png: {role: host}
   aura-3.png: {role: host}
   aura-4.png: {role: host}
+  aura-5.png: {role: host}
+  aura-6.png: {role: host}
   haircut-1.png: {role: pool}
   haircut-2.png: {role: pool}
   haircut-3.png: {role: pool}
   haircut-4.png: {role: pool}
   haircut-5.png: {role: pool}
+  haircut-6.png: {role: pool}
+  haircut-7.png: {role: pool}
+  haircut-8.png: {role: pool}
   washing-1.png: {role: pool}
+  other-1.png: {role: pool} # haircut-in-progress shot, same category as haircut-*
+  bizyr-ai-app-product1.png: {role: pool} # showing off the app is fine in any post
+  "JRL Onyx Razor-product.png": {role: product} # dedicated "products every barber needs" post only
+  "Yasaka-shears-product.png": {role: product} # dedicated "products every barber needs" post only
