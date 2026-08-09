@@ -1,0 +1,25 @@
+Source: TikTok videos, downloaded and converted to MP3 via a third-party tool. Confirmed via
+each file's own embedded metadata (not just the account owner's account of it) -- every
+track carries a `vid:` comment tag matching TikTok's internal video ID format, an
+`aigc_info` tag matching TikTok/Douyin's own AI-content-labeling metadata, and MP4/isom
+container brand tags consistent with having started as a downloaded TikTok video before
+audio-only conversion.
+
+License status: NOT licensed for use outside TikTok. TikTok's own Music Terms of Service
+state that Commercial Sounds may not be distributed or performed separately from the TikTok
+videos they were originally attached to, and that use outside TikTok requires separately
+licensing the rights directly from the sound's rights holder. These tracks do not have that
+separate license.
+
+Included anyway at the explicit, repeated, informed request of the project owner, who was
+walked through the actual risk (copyright/ToS violation; possible Content ID muting or
+claims on YouTube and Instagram; possible account restriction on repeat violations;
+confirmed the real TikTok origin via the files' own metadata, not assumption) and chose to
+accept that risk for this account regardless. This file exists so that fact stays visible
+and auditable in the codebase itself -- nobody should mistake these for properly licensed
+royalty-free tracks by reading the code alone.
+
+If this ever needs to change: replace these files with genuinely licensed audio (e.g. real
+downloads from the YouTube Audio Library, saved directly via studio.youtube.com's own
+download button, verifiable by the absence of any TikTok-origin metadata like the above)
+and delete this file.
