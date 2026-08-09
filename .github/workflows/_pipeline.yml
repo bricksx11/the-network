@@ -50,6 +50,9 @@ jobs:
         run: |
           git config user.name "the-network-bot"
           git config user.email "the-network-bot@users.noreply.github.com"
+          # logs/ may not exist yet if the pipeline step failed before writing one
+          # (e.g. missing credentials) -- mkdir -p makes `git add` safe either way.
+          mkdir -p logs
           git add logs/
           git diff --cached --quiet || git commit -m "run log: ${{ matrix.niche }} $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push

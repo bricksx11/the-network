@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "the-network-trigger",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "observability": {
+    "enabled": true
+  },
+  "kv_namespaces": [
+    { "binding": "DEBOUNCE_KV", "id": "a4bcfcd8905e4aeb9851a1297490518e" }
+  ]
+  // Secrets (never committed -- set via `wrangler secret put <NAME>`, run by the user
+  // directly in their own terminal so the value never passes through anything else):
+  //   TRIGGER_SECRET  -- shared secret the phone Shortcut must present
+  //   GITHUB_PAT      -- repo-scoped token, permission to fire repository_dispatch on this repo
+}
