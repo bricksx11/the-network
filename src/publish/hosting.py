@@ -24,6 +24,15 @@ from pathlib import Path
 
 SCRATCH_BRANCH = "render-scratch"
 
+# Platform URL-ownership verification files (e.g. TikTok's PULL_FROM_URL prefix check) must
+# live at this exact scratch-branch URL prefix permanently -- but publish_to_scratch_branch
+# wipes the branch on every push (single fresh orphan commit each time), so these get
+# re-copied into every push rather than surviving on their own. Committed to `main` (under
+# repo_root) as the durable source; add a new file to this directory for any future platform
+# verification requirement, no code change needed. Relative to repo_root (not this module's
+# own location) so tests using a fake repo never pick up the real repo's files.
+VERIFICATION_FILES_SUBDIR = Path("assets") / "verification-files"
+
 
 class HostingError(Exception):
     pass
@@ -83,6 +92,12 @@ def publish_to_scratch_branch(
                 dest = worktree_dir / f.name
                 shutil.copy2(f, dest)
                 names.append(f.name)
+
+            verification_files_dir = repo_root / VERIFICATION_FILES_SUBDIR
+            if verification_files_dir.is_dir():
+                for vf in verification_files_dir.iterdir():
+                    if vf.is_file():
+                        shutil.copy2(vf, worktree_dir / vf.name)
 
             _run_git(["add", "-A"], cwd=worktree_dir)
             _run_git(["-c", "user.email=the-network@local", "-c", "user.name=the-network", "commit", "-m", "scratch render output"], cwd=worktree_dir)

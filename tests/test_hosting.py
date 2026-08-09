@@ -90,6 +90,24 @@ def test_publish_to_scratch_branch_force_push_replaces_not_accumulates(local_rep
     assert len(log.splitlines()) == 1  # always a single fresh orphan commit, no history growth
 
 
+def test_publish_to_scratch_branch_always_includes_verification_files(local_repo_with_remote, tmp_path):
+    """Platform URL-ownership verification files (e.g. TikTok's) must survive every wipe --
+    they live under repo_root/assets/verification-files/ and get copied into every push
+    automatically, not just when explicitly passed in `files`.
+    """
+    local_repo, bare_remote = local_repo_with_remote
+    verification_dir = local_repo / "assets" / "verification-files"
+    verification_dir.mkdir(parents=True)
+    (verification_dir / "tiktok-verify.txt").write_text("tiktok-developers-site-verification=fake123")
+
+    file_a = tmp_path / "a.png"
+    file_a.write_bytes(b"fake image a")
+    publish_to_scratch_branch([file_a], local_repo, "owner", "repo")
+
+    ls = _run(["ls-tree", "-r", "--name-only", "render-scratch"], cwd=bare_remote)
+    assert set(ls.splitlines()) == {"a.png", "tiktok-verify.txt"}
+
+
 def test_publish_to_scratch_branch_raises_on_empty_file_list(local_repo_with_remote):
     local_repo, _ = local_repo_with_remote
     with pytest.raises(ValueError, match="no files"):
