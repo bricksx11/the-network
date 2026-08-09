@@ -119,3 +119,25 @@ def test_render_video_actually_animates_between_first_and_last_frame(tmp_path, p
     )
 
     assert first_frame.read_bytes() != last_frame.read_bytes()
+
+
+@requires_ffmpeg
+def test_render_video_with_no_audio_path_produces_silent_video(tmp_path):
+    """audio_path=None (no licensed music available yet) must still render a valid video --
+    used for platforms with a manual review step (YouTube Studio's own Audio Library, TikTok
+    drafts + in-app sound) rather than blocking the whole pipeline on missing music.
+    """
+    images = select_images(BARBER_DIR, count=2)
+    texts = [SlideText(headline="A"), SlideText(headline="B")]
+    out_path = tmp_path / "out.mp4"
+
+    render_video(images, texts, None, out_path, segment_duration_s=2.0, xfade_duration_s=0.4)
+
+    assert out_path.exists()
+
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", str(out_path)],
+        capture_output=True, text=True, check=True,
+    )
+    stream_types = {s["codec_type"] for s in json.loads(probe.stdout)["streams"]}
+    assert stream_types == {"video"}

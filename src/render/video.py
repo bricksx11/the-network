@@ -19,6 +19,7 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from src.image_selector import ImageAsset
 from src.render.carousel import SlideText, render_background, render_text_overlay_layer
@@ -101,15 +102,20 @@ def _run_ffmpeg(args: list[str]) -> None:
 def render_video(
     images: list[ImageAsset],
     slide_texts: list[SlideText],
-    audio_path: Path,
+    audio_path: Optional[Path],
     out_path: Path,
     fps: int = FPS,
     segment_duration_s: float = SEGMENT_DURATION_S,
     xfade_duration_s: float = XFADE_DURATION_S,
 ) -> Path:
+    """audio_path=None renders a silent video -- used when no licensed music track is
+    available yet. Silent output is safe to upload to platforms with a manual review step
+    (YouTube private upload + Studio's own Audio Library, TikTok drafts + in-app sound) but
+    should never be auto-published somewhere with no such step (e.g. Instagram Reels).
+    """
     if len(images) != len(slide_texts):
         raise ValueError(f"got {len(images)} images but {len(slide_texts)} slide texts -- must match 1:1")
-    if not audio_path.exists():
+    if audio_path is not None and not audio_path.exists():
         raise VideoRenderError(f"audio track not found: {audio_path}")
 
     timeline = VideoTimeline(len(images), segment_duration_s, xfade_duration_s)
@@ -136,7 +142,7 @@ def render_video(
 def _render_video_from_assets(
     bg_paths: list[Path],
     overlay_paths: list[Path],
-    audio_path: Path,
+    audio_path: Optional[Path],
     out_path: Path,
     timeline: VideoTimeline,
     fps: int,
@@ -145,11 +151,12 @@ def _render_video_from_assets(
     input_args: list[str] = []
     filter_parts: list[str] = []
 
-    # Two inputs per slide (moving background + static overlay), then audio last.
+    # Two inputs per slide (moving background + static overlay), then audio last (if any).
     for i in range(n):
         input_args += ["-loop", "1", "-t", str(timeline.segment_duration_s), "-r", str(fps), "-i", str(bg_paths[i])]
         input_args += ["-loop", "1", "-t", str(timeline.segment_duration_s), "-r", str(fps), "-i", str(overlay_paths[i])]
-    input_args += ["-i", str(audio_path)]
+    if audio_path is not None:
+        input_args += ["-i", str(audio_path)]
 
     seg_labels = []
     for i in range(n):
@@ -171,12 +178,18 @@ def _render_video_from_assets(
         )
         running_label = out_label
 
-    audio_input_index = 2 * n
     total_duration = timeline.total_duration_s
-    fade_start = max(total_duration - AUDIO_FADE_OUT_S, 0)
-    filter_parts.append(
-        f"[{audio_input_index}:a]atrim=0:{total_duration},afade=t=out:st={fade_start}:d={AUDIO_FADE_OUT_S}[aout]"
-    )
+    map_args = ["-map", "[vout]"]
+    codec_args = ["-c:v", "libx264", "-pix_fmt", "yuv420p"]
+
+    if audio_path is not None:
+        audio_input_index = 2 * n
+        fade_start = max(total_duration - AUDIO_FADE_OUT_S, 0)
+        filter_parts.append(
+            f"[{audio_input_index}:a]atrim=0:{total_duration},afade=t=out:st={fade_start}:d={AUDIO_FADE_OUT_S}[aout]"
+        )
+        map_args += ["-map", "[aout]"]
+        codec_args += ["-c:a", "aac"]
 
     filter_complex = ";".join(filter_parts)
 
@@ -186,18 +199,10 @@ def _render_video_from_assets(
             *input_args,
             "-filter_complex",
             filter_complex,
-            "-map",
-            "[vout]",
-            "-map",
-            "[aout]",
+            *map_args,
             "-t",
             str(total_duration),
-            "-c:v",
-            "libx264",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
+            *codec_args,
             "-shortest",
             str(out_path),
         ]

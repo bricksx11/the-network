@@ -50,19 +50,23 @@ def load_niche_config(niche: str) -> dict:
     return niches[niche]
 
 
-def find_music_track(rng: random.Random) -> Path:
-    """Pick a random committed, licensed royalty-free track. Raises a clear, actionable
-    error if the music library is still empty -- this must never silently fall back to a
-    placeholder tone outside of tests, since that would risk shipping unlicensed/no audio
-    without anyone noticing.
+def find_music_track(rng: random.Random) -> Path | None:
+    """Pick a random committed, licensed royalty-free track, or None if the library is still
+    empty. None renders a silent video rather than blocking the whole run -- safe for
+    platforms with a manual review step (YouTube + Studio's own Audio Library, TikTok drafts
+    + in-app sound) where real audio gets added after upload. Never silently substitutes a
+    placeholder tone -- that would risk shipping unlicensed audio without anyone noticing.
+    Callers that auto-publish with no manual step (Instagram Reels) must not rely on this
+    returning a track; treat None there as "not ready for Reels yet."
     """
     tracks = [p for p in MUSIC_DIR.rglob("*") if p.suffix.lower() in AUDIO_EXTENSIONS]
     if not tracks:
-        raise OrchestratorError(
-            f"no music tracks found under {MUSIC_DIR} -- add licensed royalty-free audio "
-            f"files (with a LICENSE.txt per track, per the plan) before rendering real "
-            f"video output. See assets/music/README.md."
+        print(
+            f"warning: no music tracks found under {MUSIC_DIR} -- rendering silent video. "
+            f"Add real licensed audio via assets/music/README.md before enabling Instagram "
+            f"Reels (no manual step there to add audio after the fact)."
         )
+        return None
     return rng.choice(tracks)
 
 
@@ -108,13 +112,15 @@ def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None, publi
         "shape": gate_result.shape,
         "trend_signal": asdict(gate_result.trend_signal) if gate_result.trend_signal else None,
         "images_used": [str(a.path.relative_to(REPO_ROOT)) for a in images],
-        "music_track": str(music_track.relative_to(REPO_ROOT)),
+        "music_track": str(music_track.relative_to(REPO_ROOT)) if music_track else None,
         "carousel_output": [str(p.relative_to(out_dir)) for p in carousel_paths],
         "video_output": str(video_path.relative_to(out_dir)),
     }
 
     if publish:
-        run_record["publish_results"] = publish_niche(niche, niche_config, carousel_paths, video_path, script)
+        run_record["publish_results"] = publish_niche(
+            niche, niche_config, carousel_paths, video_path, script, has_music=music_track is not None
+        )
 
     LOGS_DIR.mkdir(exist_ok=True)
     log_path = LOGS_DIR / f"{niche}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json"
@@ -133,6 +139,7 @@ def publish_niche(
     repo_root: Path = REPO_ROOT,
     github_owner: str = GITHUB_OWNER,
     github_repo: str = GITHUB_REPO,
+    has_music: bool = True,
 ) -> dict:
     """Publish rendered output to every enabled, ID-configured platform for this niche.
     A platform missing its account/page ID in niche_config (still null -- not yet
@@ -144,6 +151,11 @@ def publish_niche(
     separate ones) -- pushing twice would force-overwrite the first push's files before
     Instagram/TikTok/Facebook ever get a chance to fetch them, since each push replaces
     the branch's entire contents.
+
+    has_music=False means video_path is a silent render (no licensed track available yet).
+    That's fine for platforms with a manual review step, but Instagram Reels auto-publish
+    immediately with no such step -- so the Reel specifically is skipped rather than posting
+    dead-silent public content, even though the carousel (unaffected by audio) still goes out.
     """
     creds = load_niche_credentials(niche)
     platforms = niche_config.get("platforms", {})
@@ -170,8 +182,14 @@ def publish_niche(
     ig = platforms.get("instagram", {})
     if ig.get("enabled") and ig.get("business_account_id") and creds.ig_access_token:
         carousel_id = ig_publish_carousel(ig["business_account_id"], carousel_urls, caption, creds.ig_access_token)
-        reel_id = ig_publish_reel(ig["business_account_id"], video_url, caption, creds.ig_access_token)
-        results["instagram"] = {"carousel_post_id": carousel_id, "reel_post_id": reel_id}
+        ig_result: dict = {"carousel_post_id": carousel_id}
+        if has_music:
+            ig_result["reel_post_id"] = ig_publish_reel(
+                ig["business_account_id"], video_url, caption, creds.ig_access_token
+            )
+        else:
+            ig_result["reel_skipped"] = "no licensed music available -- silent Reel not auto-published"
+        results["instagram"] = ig_result
     else:
         results["instagram"] = {"skipped": "not configured"}
 
