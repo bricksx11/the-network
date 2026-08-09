@@ -36,14 +36,14 @@ niches:
     trend_seed_keyword: "dog groomer business"
     platforms:
       instagram:
-        enabled: false
-        business_account_id: null
+        enabled: false # still need Facebook + YouTube before this niche is ready to test
+        business_account_id: "17841437271348468" # dog.groomer.alyssa, via Instagram Login -- confirmed in Meta app dashboard
         post_reel: false
       facebook:
         enabled: false
         page_id: null
       tiktok:
-        enabled: false
+        enabled: false # token minted, not yet enabled -- waiting on the other platforms too
         creator_open_id: null
       youtube:
         enabled: false
