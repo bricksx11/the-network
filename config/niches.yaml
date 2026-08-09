@@ -31,10 +31,24 @@ niches:
         channel_id: null # YouTube channel ID; refresh token lives in the NICHE_CREDS secret, not here
         cta_override: "Link in bio" # replaces the default comment-bait CTA for this platform only
 
-  # DogGroomer:
-  #   image_dir: assets/avatars/DogGroomer/marketing
-  #   trend_seed_keyword: "dog groomer business"
-  #   platforms: { ... same shape as Barber ... }
+  DogGroomer:
+    image_dir: assets/avatars/DogGroomer/marketing
+    trend_seed_keyword: "dog groomer business"
+    platforms:
+      instagram:
+        enabled: false
+        business_account_id: null
+        post_reel: false
+      facebook:
+        enabled: false
+        page_id: null
+      tiktok:
+        enabled: false
+        creator_open_id: null
+      youtube:
+        enabled: false
+        channel_id: null
+        cta_override: "Link in bio"
 
   # CarDetailer:
   #   image_dir: assets/avatars/CarDetailer/marketing

@@ -1,0 +1,26 @@
+# Per-image role tagging for this niche's image pool. See Barber's manifest.yaml for the
+# full role explanation. Roles here were assigned by actually looking at each image, not
+# from filename alone -- "(BEST)starter-grooming-5.png" looked like a host candidate by
+# name, but it's actually an action/grooming shot (not camera-facing), so it's pool, not
+# host. "chilling-1.png" looked like a relaxed-pet pool shot by name, but it's actually a
+# camera-facing storefront selfie, so it's host, not pool.
+
+images:
+  "(BEST)starter-grooming-4.png": {role: host} # camera-facing selfie w/ dog
+  starter-grooming-1.png: {role: host} # camera-facing selfie, storefront
+  starter-grooming-2.png: {role: host} # camera-facing selfie w/ dog
+  starter-grooming-3.png: {role: host} # camera-facing selfie w/ dog
+  chilling-1.png: {role: host} # camera-facing, storefront exterior
+  "(BEST)starter-grooming-5.png": {role: pool} # brushing a dog, not camera-facing
+  grooming-1.png: {role: pool}
+  grooming-2.png: {role: pool}
+  grooming-3.png: {role: pool}
+  grooming-4.png: {role: pool}
+  grooming-5.png: {role: pool}
+  grooming-7.png: {role: pool}
+  grooming-8.png: {role: pool}
+  grooming-9.png: {role: pool}
+  bizyr-ai-app-porduct.png: {role: pool} # showing off the app is fine in any post (matches Barber's rule)
+  Andis-professional-clippers-product.png: {role: product} # dedicated "products every dog groomer needs" post only
+  "Chris Christensen Grooming brushes-product.png": {role: product} # dedicated gear-list post only
+  "Hydra — Professional grooming silky shampoos & conditioners-product.png": {role: product} # dedicated gear-list post only
