@@ -8,6 +8,12 @@ on:
     - cron: "0 18 * * *"
   workflow_dispatch: {} # manual trigger from the Actions tab, for testing without waiting on cron
 
+permissions:
+  contents: write # a reusable workflow's permissions can only be downgraded by the caller,
+  # never elevated -- without this, _pipeline.yml's own `contents: write` gets silently
+  # capped by this repo's read-only default, causing a startup_failure before any job runs
+  # (confirmed via a real failed run, not assumed)
+
 jobs:
   run:
     uses: ./.github/workflows/_pipeline.yml
