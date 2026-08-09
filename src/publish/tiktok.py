@@ -30,12 +30,12 @@ STATUS_POLL_INTERVAL_S = 3
 STATUS_POLL_TIMEOUT_S = 120
 
 # Confirmed from docs: publish_id and an error object (code/message/log_id) on init.
-# Status-check response status values were NOT fully confirmed against a live response
-# (TikTok's own doc excerpt didn't enumerate them) -- treat anything with "FAIL" in the
-# status string as failure and "PUBLISH_COMPLETE" as done; this should be verified against
-# a real sandbox call before this module is trusted in production, per the plan's own call
-# for a standalone TikTok spike.
-STATUS_COMPLETE = "PUBLISH_COMPLETE"
+# Status-check terminal-success value confirmed against a real sandbox call (not assumed):
+# for post_mode=MEDIA_UPLOAD (drafts/inbox -- what this module always uses), the real
+# terminal status is SEND_TO_USER_INBOX, not PUBLISH_COMPLETE -- that name is presumably
+# specific to DIRECT_POST, which this module never uses. Keeping PUBLISH_COMPLETE
+# recognized too costs nothing and guards against it appearing in some other path.
+STATUS_COMPLETE_VALUES = ("SEND_TO_USER_INBOX", "PUBLISH_COMPLETE")
 
 
 class TikTokAPIError(Exception):
@@ -124,7 +124,7 @@ def wait_for_publish_complete(
     while time.monotonic() < deadline:
         data = check_publish_status(publish_id, access_token)
         status = data.get("status", "")
-        if status == STATUS_COMPLETE:
+        if status in STATUS_COMPLETE_VALUES:
             return
         if "FAIL" in status.upper():
             raise TikTokAPIError(f"publish {publish_id} failed with status {status!r}: {data}")

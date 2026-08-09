@@ -72,6 +72,17 @@ def test_wait_for_publish_complete_returns_on_success(mocker):
     wait_for_publish_complete("v_pub_url~123", "fake-token", poll_interval_s=0, timeout_s=1)  # should not raise
 
 
+def test_wait_for_publish_complete_recognizes_inbox_delivery_as_success(mocker):
+    # SEND_TO_USER_INBOX -- the real terminal status for post_mode=MEDIA_UPLOAD, confirmed
+    # against a live sandbox call, not PUBLISH_COMPLETE (that one turned out to be wrong for
+    # this mode -- a real post silently timed out because this status went unrecognized).
+    mocker.patch(
+        "src.publish.tiktok.check_publish_status",
+        return_value={"status": "SEND_TO_USER_INBOX"},
+    )
+    wait_for_publish_complete("v_pub_url~123", "fake-token", poll_interval_s=0, timeout_s=1)  # should not raise
+
+
 def test_wait_for_publish_complete_raises_on_failed_status(mocker):
     mocker.patch(
         "src.publish.tiktok.check_publish_status",
