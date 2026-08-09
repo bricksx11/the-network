@@ -16,6 +16,9 @@ on:
 jobs:
   run-niche:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed for the "Commit run log" step's git push -- repo's default
+      # GITHUB_TOKEN permission is read-only, confirmed via a real failed run, not assumed
     strategy:
       fail-fast: false
       matrix:
