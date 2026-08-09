@@ -1,0 +1,34 @@
+{
+  "niche": "Barber",
+  "timestamp": "2026-08-09T17:20:12.890603+00:00",
+  "shape": "money_reveal",
+  "trend_signal": null,
+  "images_used": [
+    "assets/avatars/Barber/marketing/aura-1.png",
+    "assets/avatars/Barber/marketing/aura-4.png",
+    "assets/avatars/Barber/marketing/aura-2.png",
+    "assets/avatars/Barber/marketing/haircut-4.png"
+  ],
+  "music_track": "assets/music/tiktok-sourced/track-4.mp3",
+  "carousel_output": [
+    "Barber/carousel/slide-1.jpg",
+    "Barber/carousel/slide-2.jpg",
+    "Barber/carousel/slide-3.jpg",
+    "Barber/carousel/slide-4.jpg"
+  ],
+  "video_output": "Barber/video/reel.mp4",
+  "publish_results": {
+    "instagram": {
+      "skipped": "not configured"
+    },
+    "facebook": {
+      "skipped": "not configured"
+    },
+    "tiktok": {
+      "publish_id": "p_inbox_url~v2.7672082452051134486"
+    },
+    "youtube": {
+      "video_id": "_PQ3-jGSn1w"
+    }
+  }
+}
