@@ -1,0 +1,35 @@
+{
+  "niche": "Barber",
+  "timestamp": "2026-08-09T18:23:37.864734+00:00",
+  "shape": "money_reveal",
+  "trend_signal": null,
+  "images_used": [
+    "assets/avatars/Barber/marketing/aura-5.png",
+    "assets/avatars/Barber/marketing/bizyr-ai-app-product1.png",
+    "assets/avatars/Barber/marketing/aura-6.png",
+    "assets/avatars/Barber/marketing/aura-4.png"
+  ],
+  "music_track": "assets/music/tiktok-sourced/track-4.mp3",
+  "carousel_output": [
+    "Barber/carousel/slide-1.jpg",
+    "Barber/carousel/slide-2.jpg",
+    "Barber/carousel/slide-3.jpg",
+    "Barber/carousel/slide-4.jpg"
+  ],
+  "video_output": "Barber/video/reel.mp4",
+  "publish_results": {
+    "instagram": {
+      "carousel_post_id": "17953039161213846",
+      "reel_skipped": "post_reel disabled in config -- carousel only for now"
+    },
+    "facebook": {
+      "post_id": "1227801577088727_122100710655433422"
+    },
+    "tiktok": {
+      "publish_id": "p_inbox_url~v2.7672099302948866070"
+    },
+    "youtube": {
+      "video_id": "K2QRu11IuEI"
+    }
+  }
+}
