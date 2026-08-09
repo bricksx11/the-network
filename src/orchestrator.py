@@ -102,9 +102,15 @@ def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None, publi
     carousel_dir = out_dir / niche / "carousel"
     carousel_paths = render_carousel(images, slide_texts, carousel_dir)
 
+    # The video is currently only ever published to YouTube (Instagram Reel is off via
+    # post_reel: false) -- its last-slide on-screen CTA needs to be YouTube's own override
+    # ("Link in bio"), not the default comment-bait CTA baked into the carousel's slides.
+    # Same images, different text. Revisit this if Instagram Reel (sharing this same file)
+    # ever gets re-enabled -- "Link in bio" on-screen may not be the right call there too.
+    video_slide_texts = build_slide_texts(script, platform="youtube")
     video_path = out_dir / niche / "video" / "reel.mp4"
     music_track = find_music_track(rng)
-    render_video(images, slide_texts, music_track, video_path)
+    render_video(images, video_slide_texts, music_track, video_path)
 
     run_record = {
         "niche": niche,
@@ -222,7 +228,10 @@ def publish_niche(
     yt = platforms.get("youtube", {})
     if yt.get("enabled") and creds.youtube:
         youtube_client = build_youtube_client(creds.youtube)
-        cta = script.platform_cta_overrides.get("youtube", script.cta)
+        # niche_config's cta_override is the actual source of truth (e.g. "Link in bio" --
+        # YouTube has no DM/comment-bait culture) -- script.platform_cta_overrides is only
+        # a fallback for when a niche's config hasn't set one explicitly.
+        cta = yt.get("cta_override") or script.platform_cta_overrides.get("youtube", script.cta)
         video_id = upload_private_video(youtube_client, video_path, script.hook, f"{script.reveal}\n\n{cta}")
         results["youtube"] = {"video_id": video_id}
     else:

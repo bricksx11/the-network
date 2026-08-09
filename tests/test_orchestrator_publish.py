@@ -160,6 +160,30 @@ def test_publish_niche_skips_reel_when_post_reel_disabled_even_with_music(mocker
     assert results["instagram"]["reel_skipped"] == "post_reel disabled in config -- carousel only for now"
 
 
+def test_publish_niche_youtube_cta_prefers_config_override(mocker, full_credentials_env, tmp_path):
+    # niche_config's cta_override was previously dead config -- nothing ever read it, so
+    # editing it in niches.yaml silently did nothing. Now it's the actual source of truth.
+    mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1"])
+    mocker.patch("src.orchestrator.build_youtube_client", return_value=mocker.MagicMock())
+    mock_upload = mocker.patch("src.orchestrator.upload_private_video", return_value="yt-id")
+
+    niche_config = {
+        "platforms": {
+            "instagram": {"enabled": False},
+            "facebook": {"enabled": False},
+            "tiktok": {"enabled": False},
+            "youtube": {"enabled": True, "cta_override": "Config says this instead"},
+        }
+    }
+    script = make_script(platform_cta_overrides={"youtube": "Script says this"})
+
+    publish_niche("Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", script)
+
+    description = mock_upload.call_args.args[3]
+    assert "Config says this instead" in description
+    assert "Script says this" not in description
+
+
 def test_publish_niche_skips_platforms_missing_ids(mocker, full_credentials_env, tmp_path):
     mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1", "url2"])
     mock_ig = mocker.patch("src.orchestrator.ig_publish_carousel")
@@ -252,6 +276,30 @@ def _mock_render_pipeline(mocker, tmp_path):
     mocker.patch("src.orchestrator.render_carousel", return_value=carousel_paths)
     mocker.patch("src.orchestrator.render_video")
     mocker.patch("src.orchestrator.find_music_track", return_value=tmp_path / "track.mp3")
+
+
+def test_run_niche_bakes_youtube_cta_into_video_not_carousel(mocker, tmp_path):
+    """The video is only ever published to YouTube right now (Reel is off) -- its last
+    slide's on-screen CTA must be YouTube's override ("Link in bio"), while the carousel
+    (Instagram/Facebook/TikTok) keeps the default comment-bait CTA. Previously both shared
+    the exact same rendered text, so the video always showed the wrong CTA on-screen even
+    though the video's *description* correctly used the YouTube override.
+    """
+    mocker.patch("src.orchestrator.LOGS_DIR", tmp_path / "logs")
+    mocker.patch("src.orchestrator.REPO_ROOT", tmp_path)
+    _mock_render_pipeline(mocker, tmp_path)
+    mock_render_carousel = mocker.patch(
+        "src.orchestrator.render_carousel", return_value=[tmp_path / "out" / f"slide-{i}.png" for i in range(4)]
+    )
+    mock_render_video = mocker.patch("src.orchestrator.render_video")
+
+    run_niche("Barber", tmp_path / "out", publish=False)
+
+    carousel_texts = mock_render_carousel.call_args.args[1]
+    video_texts = mock_render_video.call_args.args[1]
+
+    assert carousel_texts[-1].subtext == "Comment 'CALLS' and I'll send you the app."
+    assert video_texts[-1].subtext == "Link in bio"
 
 
 def test_run_niche_publish_false_skips_publishing(mocker, tmp_path):
