@@ -19,8 +19,8 @@ _STUB_SCRIPT = Script(
     beats=[
         "I stopped keeping low-paying clients just to stay busy. I started making room for "
         "the bigger-paying regulars instead.",
-        "I stopped underpricing myself out of fear of losing clients. I raised my rates — "
-        "and busier days turned into bigger days.",
+        "I stopped losing clients after one cut. I built a simple system that actually got "
+        "them rebooking instead of disappearing.",
     ],
     reveal=(
         "Missed calls were costing me more than I realized. So I found an app that answers "
