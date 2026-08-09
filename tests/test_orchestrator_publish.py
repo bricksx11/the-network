@@ -132,6 +132,34 @@ def test_publish_niche_propagates_tiktok_failure_after_init_looked_fine(mocker, 
         publish_niche("Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", make_script())
 
 
+def test_publish_niche_skips_reel_when_post_reel_disabled_even_with_music(mocker, full_credentials_env, tmp_path):
+    mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1"])
+    mocker.patch("src.orchestrator.ig_publish_carousel", return_value="ig-carousel-id")
+    mock_reel = mocker.patch("src.orchestrator.ig_publish_reel")
+    mocker.patch("src.orchestrator.fb_publish_carousel", return_value="fb-post-id")
+    mocker.patch("src.orchestrator.upload_carousel_to_drafts", return_value="tt-id")
+    mocker.patch("src.orchestrator.wait_for_publish_complete")
+    mocker.patch("src.orchestrator.build_youtube_client", return_value=mocker.MagicMock())
+    mocker.patch("src.orchestrator.upload_private_video", return_value="yt-id")
+
+    niche_config = {
+        "platforms": {
+            "instagram": {"enabled": True, "business_account_id": "ig-123", "post_reel": False},
+            "facebook": {"enabled": True, "page_id": "page-123"},
+            "tiktok": {"enabled": True},
+            "youtube": {"enabled": True},
+        }
+    }
+
+    results = publish_niche(
+        "Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", make_script(), has_music=True
+    )
+
+    mock_reel.assert_not_called()
+    assert results["instagram"]["carousel_post_id"] == "ig-carousel-id"
+    assert results["instagram"]["reel_skipped"] == "post_reel disabled in config -- carousel only for now"
+
+
 def test_publish_niche_skips_platforms_missing_ids(mocker, full_credentials_env, tmp_path):
     mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1", "url2"])
     mock_ig = mocker.patch("src.orchestrator.ig_publish_carousel")

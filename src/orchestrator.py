@@ -156,6 +156,10 @@ def publish_niche(
     That's fine for platforms with a manual review step, but Instagram Reels auto-publish
     immediately with no such step -- so the Reel specifically is skipped rather than posting
     dead-silent public content, even though the carousel (unaffected by audio) still goes out.
+
+    instagram.post_reel: false in niche_config is a separate, explicit override that skips
+    the Reel regardless of has_music -- for staying carousel-only on Instagram by choice
+    (e.g. while still deciding on Reel content/audio), independent of the music guard above.
     """
     creds = load_niche_credentials(niche)
     platforms = niche_config.get("platforms", {})
@@ -164,8 +168,9 @@ def publish_niche(
     needs_carousel_urls = any(
         platforms.get(p, {}).get("enabled") for p in ("instagram", "facebook", "tiktok")
     )
-    needs_video_url = platforms.get("instagram", {}).get("enabled") and platforms["instagram"].get(
-        "business_account_id"
+    ig_config = platforms.get("instagram", {})
+    needs_video_url = (
+        ig_config.get("enabled") and ig_config.get("business_account_id") and ig_config.get("post_reel", True)
     )
 
     carousel_urls: list[str] = []
@@ -179,11 +184,13 @@ def publish_niche(
 
     caption = f"{script.hook}\n\n{script.cta}"
 
-    ig = platforms.get("instagram", {})
+    ig = ig_config
     if ig.get("enabled") and ig.get("business_account_id") and creds.ig_access_token:
         carousel_id = ig_publish_carousel(ig["business_account_id"], carousel_urls, caption, creds.ig_access_token)
         ig_result: dict = {"carousel_post_id": carousel_id}
-        if has_music:
+        if not ig.get("post_reel", True):
+            ig_result["reel_skipped"] = "post_reel disabled in config -- carousel only for now"
+        elif has_music:
             ig_result["reel_post_id"] = ig_publish_reel(
                 ig["business_account_id"], video_url, caption, creds.ig_access_token
             )

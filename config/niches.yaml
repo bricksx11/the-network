@@ -15,10 +15,13 @@ niches:
     trend_seed_keyword: "barber business"
     platforms:
       instagram:
-        enabled: false # temporarily off -- Instagram auto-publishes live/public with no draft step, holding until user says go
+        enabled: true
         business_account_id: "17841438706552035" # aidentrimz, via Instagram Login (graph.instagram.com) -- confirmed in Meta app dashboard
+        post_reel: false # carousel only for now, per explicit request -- Reels auto-publish
+        # instantly (no draft/review step, unlike YouTube/TikTok), so this stays off
+        # independent of whether real music exists until explicitly turned back on
       facebook:
-        enabled: false # temporarily off -- Facebook auto-publishes live/public with no draft step, holding until user says go
+        enabled: true
         page_id: "1227801577088727" # "Aiden Barber" Page, confirmed via me/accounts
       tiktok:
         enabled: true
