@@ -37,6 +37,7 @@ def full_credentials_env(monkeypatch):
         json.dumps(
             {
                 "meta_access_token": "meta-token",
+                "ig_access_token": "ig-token",
                 "tiktok_access_token": "tiktok-token",
                 "youtube": {
                     "refresh_token": "yt-refresh",
@@ -111,7 +112,7 @@ def test_publish_niche_skips_platforms_missing_ids(mocker, full_credentials_env,
 
 
 def test_publish_niche_skips_platform_missing_credentials(mocker, tmp_path, monkeypatch):
-    # meta_access_token absent entirely -- IG/FB should skip even though IDs are present
+    # meta_access_token/ig_access_token absent entirely -- IG/FB should skip even though IDs are present
     monkeypatch.setenv("NICHE_CREDS__BARBER", json.dumps({"tiktok_access_token": "tiktok-token"}))
     mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1", "url2"])
     mock_ig = mocker.patch("src.orchestrator.ig_publish_carousel")

@@ -11,6 +11,7 @@ def test_load_niche_credentials_full_blob(monkeypatch):
         json.dumps(
             {
                 "meta_access_token": "meta-token",
+                "ig_access_token": "ig-token",
                 "tiktok_access_token": "tiktok-token",
                 "youtube": {
                     "refresh_token": "yt-refresh",
@@ -22,6 +23,7 @@ def test_load_niche_credentials_full_blob(monkeypatch):
     )
     creds = load_niche_credentials("Barber")
     assert creds.meta_access_token == "meta-token"
+    assert creds.ig_access_token == "ig-token"
     assert creds.tiktok_access_token == "tiktok-token"
     assert creds.youtube.refresh_token == "yt-refresh"
     assert creds.youtube.client_id == "yt-client-id"
@@ -31,6 +33,7 @@ def test_load_niche_credentials_partial_blob_omits_platforms(monkeypatch):
     monkeypatch.setenv("NICHE_CREDS__BARBER", json.dumps({"meta_access_token": "meta-token"}))
     creds = load_niche_credentials("Barber")
     assert creds.meta_access_token == "meta-token"
+    assert creds.ig_access_token is None
     assert creds.tiktok_access_token is None
     assert creds.youtube is None
 

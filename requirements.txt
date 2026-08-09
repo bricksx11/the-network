@@ -3,5 +3,6 @@ Pillow>=10.0
 requests>=2.31
 google-api-python-client>=2.100
 google-auth>=2.23
+google-auth-oauthlib>=1.2
 pytest>=8.0
 pytest-mock>=3.12

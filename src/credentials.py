@@ -5,7 +5,11 @@ niches x platforms x token-types.
 
 Expected shape:
 {
-  "meta_access_token": "...",           # shared by Instagram + Facebook (same Graph API token)
+  "meta_access_token": "...",           # Facebook Page token (graph.facebook.com) -- Facebook only
+  "ig_access_token": "...",             # Instagram Login token (graph.instagram.com) -- Instagram only.
+                                         # Separate from meta_access_token: Facebook Login and Instagram
+                                         # Login are different Meta identity systems that don't share
+                                         # tokens (confirmed via Meta's own docs).
   "tiktok_access_token": "...",
   "youtube": {
     "refresh_token": "...",
@@ -36,6 +40,7 @@ class CredentialsError(Exception):
 @dataclass(frozen=True)
 class NicheCredentials:
     meta_access_token: Optional[str]
+    ig_access_token: Optional[str]
     tiktok_access_token: Optional[str]
     youtube: Optional[YouTubeCredentials]
 
@@ -62,6 +67,7 @@ def load_niche_credentials(niche: str) -> NicheCredentials:
 
     return NicheCredentials(
         meta_access_token=data.get("meta_access_token"),
+        ig_access_token=data.get("ig_access_token"),
         tiktok_access_token=data.get("tiktok_access_token"),
         youtube=youtube_creds,
     )

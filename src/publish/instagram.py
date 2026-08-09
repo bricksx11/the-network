@@ -9,7 +9,7 @@ module's (see meta_common's docstring on the hosting-hop).
 
 from __future__ import annotations
 
-from src.publish.meta_common import graph_post, wait_for_container_ready
+from src.publish.meta_common import GRAPH_INSTAGRAM_API_BASE, graph_post, wait_for_container_ready
 
 MAX_CAROUSEL_IMAGES = 10
 MIN_CAROUSEL_IMAGES = 2
@@ -28,6 +28,7 @@ def publish_carousel(ig_business_account_id: str, image_urls: list[str], caption
         result = graph_post(
             f"{ig_business_account_id}/media",
             access_token,
+            api_base=GRAPH_INSTAGRAM_API_BASE,
             image_url=url,
             is_carousel_item="true",
         )
@@ -36,14 +37,20 @@ def publish_carousel(ig_business_account_id: str, image_urls: list[str], caption
     container = graph_post(
         f"{ig_business_account_id}/media",
         access_token,
+        api_base=GRAPH_INSTAGRAM_API_BASE,
         media_type="CAROUSEL",
         caption=caption,
         children=",".join(child_ids),
     )
     container_id = container["id"]
-    wait_for_container_ready(container_id, access_token)
+    wait_for_container_ready(container_id, access_token, api_base=GRAPH_INSTAGRAM_API_BASE)
 
-    published = graph_post(f"{ig_business_account_id}/media_publish", access_token, creation_id=container_id)
+    published = graph_post(
+        f"{ig_business_account_id}/media_publish",
+        access_token,
+        api_base=GRAPH_INSTAGRAM_API_BASE,
+        creation_id=container_id,
+    )
     return published["id"]
 
 
@@ -56,12 +63,20 @@ def publish_reel(ig_business_account_id: str, video_url: str, caption: str, acce
     container = graph_post(
         f"{ig_business_account_id}/media",
         access_token,
+        api_base=GRAPH_INSTAGRAM_API_BASE,
         media_type="REELS",
         video_url=video_url,
         caption=caption,
     )
     container_id = container["id"]
-    wait_for_container_ready(container_id, access_token, timeout_s=VIDEO_CONTAINER_TIMEOUT_S)
+    wait_for_container_ready(
+        container_id, access_token, timeout_s=VIDEO_CONTAINER_TIMEOUT_S, api_base=GRAPH_INSTAGRAM_API_BASE
+    )
 
-    published = graph_post(f"{ig_business_account_id}/media_publish", access_token, creation_id=container_id)
+    published = graph_post(
+        f"{ig_business_account_id}/media_publish",
+        access_token,
+        api_base=GRAPH_INSTAGRAM_API_BASE,
+        creation_id=container_id,
+    )
     return published["id"]

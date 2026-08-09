@@ -168,9 +168,9 @@ def publish_niche(
     caption = f"{script.hook}\n\n{script.cta}"
 
     ig = platforms.get("instagram", {})
-    if ig.get("enabled") and ig.get("business_account_id") and creds.meta_access_token:
-        carousel_id = ig_publish_carousel(ig["business_account_id"], carousel_urls, caption, creds.meta_access_token)
-        reel_id = ig_publish_reel(ig["business_account_id"], video_url, caption, creds.meta_access_token)
+    if ig.get("enabled") and ig.get("business_account_id") and creds.ig_access_token:
+        carousel_id = ig_publish_carousel(ig["business_account_id"], carousel_urls, caption, creds.ig_access_token)
+        reel_id = ig_publish_reel(ig["business_account_id"], video_url, caption, creds.ig_access_token)
         results["instagram"] = {"carousel_post_id": carousel_id, "reel_post_id": reel_id}
     else:
         results["instagram"] = {"skipped": "not configured"}
