@@ -20,7 +20,7 @@ from src.publish.facebook import publish_carousel as fb_publish_carousel
 from src.publish.hosting import publish_to_scratch_branch
 from src.publish.instagram import publish_carousel as ig_publish_carousel
 from src.publish.instagram import publish_reel as ig_publish_reel
-from src.publish.tiktok import upload_carousel_to_drafts
+from src.publish.tiktok import upload_carousel_to_drafts, wait_for_publish_complete
 from src.publish.youtube import build_youtube_client, upload_private_video
 from src.render.carousel import SlideText, render_carousel
 from src.render.video import render_video
@@ -203,6 +203,11 @@ def publish_niche(
     tt = platforms.get("tiktok", {})
     if tt.get("enabled") and creds.tiktok_access_token:
         publish_id = upload_carousel_to_drafts(carousel_urls, script.hook, script.cta, creds.tiktok_access_token)
+        # init returning a publish_id only means TikTok accepted the request, not that it
+        # actually finished pulling/processing the images -- confirmed the hard way (a real
+        # publish_id whose actual status later came back FAILED, file_format_check_failed).
+        # Wait for a real terminal status so a silent failure doesn't get reported as success.
+        wait_for_publish_complete(publish_id, creds.tiktok_access_token)
         results["tiktok"] = {"publish_id": publish_id}
     else:
         results["tiktok"] = {"skipped": "not configured"}

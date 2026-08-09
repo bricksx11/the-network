@@ -62,6 +62,7 @@ def test_publish_niche_hosts_carousel_and_video_in_one_call(mocker, full_credent
     mocker.patch("src.orchestrator.ig_publish_reel", return_value="ig-reel-id")
     mocker.patch("src.orchestrator.fb_publish_carousel", return_value="fb-post-id")
     mocker.patch("src.orchestrator.upload_carousel_to_drafts", return_value="tt-publish-id")
+    mocker.patch("src.orchestrator.wait_for_publish_complete")
     mocker.patch("src.orchestrator.build_youtube_client", return_value=mocker.MagicMock())
     mocker.patch("src.orchestrator.upload_private_video", return_value="yt-video-id")
 
@@ -87,6 +88,7 @@ def test_publish_niche_skips_reel_but_still_posts_carousel_when_no_music(mocker,
     mock_reel = mocker.patch("src.orchestrator.ig_publish_reel")
     mocker.patch("src.orchestrator.fb_publish_carousel", return_value="fb-post-id")
     mocker.patch("src.orchestrator.upload_carousel_to_drafts", return_value="tt-id")
+    mocker.patch("src.orchestrator.wait_for_publish_complete")
     mocker.patch("src.orchestrator.build_youtube_client", return_value=mocker.MagicMock())
     mocker.patch("src.orchestrator.upload_private_video", return_value="yt-id")
 
@@ -102,11 +104,40 @@ def test_publish_niche_skips_reel_but_still_posts_carousel_when_no_music(mocker,
     assert results["youtube"] == {"video_id": "yt-id"}
 
 
+def test_publish_niche_propagates_tiktok_failure_after_init_looked_fine(mocker, full_credentials_env, tmp_path):
+    """A publish_id from the init call is not proof of success -- confirmed for real (a
+    publish_id whose actual status later came back FAILED). wait_for_publish_complete must
+    actually be awaited so a silent async failure surfaces as a real error, not a false
+    "success" result with a publish_id nobody checked.
+    """
+    from src.publish.tiktok import TikTokAPIError
+
+    mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1"])
+    mocker.patch("src.orchestrator.upload_carousel_to_drafts", return_value="tt-id-that-actually-fails")
+    mocker.patch(
+        "src.orchestrator.wait_for_publish_complete",
+        side_effect=TikTokAPIError("publish failed with status 'FAILED': file_format_check_failed"),
+    )
+
+    niche_config = {
+        "platforms": {
+            "instagram": {"enabled": False},
+            "facebook": {"enabled": False},
+            "tiktok": {"enabled": True},
+            "youtube": {"enabled": False},
+        }
+    }
+
+    with pytest.raises(TikTokAPIError, match="file_format_check_failed"):
+        publish_niche("Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", make_script())
+
+
 def test_publish_niche_skips_platforms_missing_ids(mocker, full_credentials_env, tmp_path):
     mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1", "url2"])
     mock_ig = mocker.patch("src.orchestrator.ig_publish_carousel")
     mock_fb = mocker.patch("src.orchestrator.fb_publish_carousel")
     mocker.patch("src.orchestrator.upload_carousel_to_drafts", return_value="tt-id")
+    mocker.patch("src.orchestrator.wait_for_publish_complete")
     mocker.patch("src.orchestrator.build_youtube_client")
     mocker.patch("src.orchestrator.upload_private_video", return_value="yt-id")
 
@@ -138,6 +169,7 @@ def test_publish_niche_skips_platform_missing_credentials(mocker, tmp_path, monk
     mocker.patch("src.orchestrator.publish_to_scratch_branch", return_value=["url1", "url2"])
     mock_ig = mocker.patch("src.orchestrator.ig_publish_carousel")
     mocker.patch("src.orchestrator.upload_carousel_to_drafts", return_value="tt-id")
+    mocker.patch("src.orchestrator.wait_for_publish_complete")
 
     niche_config = {
         "platforms": {

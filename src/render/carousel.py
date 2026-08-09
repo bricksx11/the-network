@@ -209,14 +209,22 @@ def _draw_right_boxed_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont
     draw.text((right - width, top + BOX_PAD_Y), text, font=font, fill=BOX_TEXT_FILL)
 
 
+JPEG_QUALITY = 92
+
+
 def render_slide(image_path: Path, text: SlideText, out_path: Path, canvas_size: tuple[int, int] = CANVAS_SIZE) -> Path:
-    """Flattened single PNG for carousel posts: background + text overlay composited together."""
+    """Flattened single JPEG for carousel posts: background + text overlay composited
+    together. JPEG, not PNG -- confirmed via a real TikTok API failure
+    (file_format_check_failed) that TikTok's Content Posting API rejects PNG outright for
+    photo posts, JPEG/WEBP only. Instagram/Facebook accept both, so this is a safe universal
+    choice rather than needing a platform-specific render path.
+    """
     background = render_background(image_path, canvas_size).convert("RGBA")
     overlay = render_text_overlay_layer(text, canvas_size)
     canvas = Image.alpha_composite(background, overlay)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    canvas.convert("RGB").save(out_path, "PNG")
+    canvas.convert("RGB").save(out_path, "JPEG", quality=JPEG_QUALITY)
     return out_path
 
 
@@ -228,6 +236,6 @@ def render_carousel(
 
     out_paths = []
     for i, (image, text) in enumerate(zip(images, slide_texts), start=1):
-        out_path = out_dir / f"slide-{i}.png"
+        out_path = out_dir / f"slide-{i}.jpg"
         out_paths.append(render_slide(image.path, text, out_path, canvas_size))
     return out_paths

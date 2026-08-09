@@ -16,23 +16,26 @@ BARBER_DIR = (
 )
 
 
-def test_render_slide_produces_correctly_sized_png(tmp_path):
+def test_render_slide_produces_correctly_sized_jpeg(tmp_path):
+    # JPEG specifically, not PNG -- TikTok's Content Posting API rejects PNG outright for
+    # photo posts (confirmed via a real API failure: file_format_check_failed).
     images = select_images(BARBER_DIR, count=1)
     out_path = render_slide(
         images[0].path,
         SlideText(headline="Test headline", subtext="Test subtext line here."),
-        tmp_path / "slide-1.png",
+        tmp_path / "slide-1.jpg",
     )
     assert out_path.exists()
     with Image.open(out_path) as img:
         assert img.size == CANVAS_SIZE
         assert img.mode == "RGB"
+        assert img.format == "JPEG"
 
 
 def test_render_slide_handles_long_wrapping_text_without_error(tmp_path):
     images = select_images(BARBER_DIR, count=1)
     long_headline = "This is a deliberately long headline that should wrap across several lines to test the word wrap logic thoroughly."
-    render_slide(images[0].path, SlideText(headline=long_headline), tmp_path / "slide-1.png")
+    render_slide(images[0].path, SlideText(headline=long_headline), tmp_path / "slide-1.jpg")
 
 
 def test_render_slide_with_corner_labels(tmp_path):
@@ -40,7 +43,7 @@ def test_render_slide_with_corner_labels(tmp_path):
     render_slide(
         images[0].path,
         SlideText(headline="Hook line", corner_left="Save this for later.", corner_right="Swipe →"),
-        tmp_path / "slide-1.png",
+        tmp_path / "slide-1.jpg",
     )
 
 
@@ -70,7 +73,7 @@ def test_headline_renders_as_white_box_with_dark_text(tmp_path):
     requirement, not an implementation detail.
     """
     images = select_images(BARBER_DIR, count=1)
-    out_path = render_slide(images[0].path, SlideText(headline="Hook"), tmp_path / "slide-1.png")
+    out_path = render_slide(images[0].path, SlideText(headline="Hook"), tmp_path / "slide-1.jpg")
 
     with Image.open(out_path) as img:
         width, height = img.size
