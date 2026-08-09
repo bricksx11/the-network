@@ -15,10 +15,10 @@ niches:
     trend_seed_keyword: "barber business"
     platforms:
       instagram:
-        enabled: true
+        enabled: false # temporarily off -- Instagram auto-publishes live/public with no draft step, holding until user says go
         business_account_id: "17841438706552035" # aidentrimz, via Instagram Login (graph.instagram.com) -- confirmed in Meta app dashboard
       facebook:
-        enabled: true
+        enabled: false # temporarily off -- Facebook auto-publishes live/public with no draft step, holding until user says go
         page_id: "1227801577088727" # "Aiden Barber" Page, confirmed via me/accounts
       tiktok:
         enabled: true
