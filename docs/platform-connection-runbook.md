@@ -27,6 +27,18 @@ a Facebook-Login-based connection** -- if the account was connected via Instagra
 (which is the path below, and the simpler one), that field stays empty forever. Don't chase
 it; use the Instagram Login path's own account list instead.
 
+0. **Before adding the account**: while the app is Unpublished, only people explicitly
+   granted a role on it can complete Instagram Login's OAuth flow -- same concept as TikTok's
+   Target Users or YouTube's Test Users, just Meta's version. Skipping this produces a
+   confusing, unrelated-looking symptom: Instagram's own "enter your date of birth"
+   verification screen gets stuck with an unresponsive Submit button (a real, widely-reported
+   Instagram bug people hit for unrelated reasons too, which makes this genuinely hard to
+   diagnose) -- the *actual* underlying error only surfaces if you retry and land on
+   `instagram.com/oauth/authorize/third_party/error/?message=Insufficient+developer+role`.
+   Fix: app dashboard -> **App roles -> Roles -> Add People** -> enter the niche's
+   Facebook/Instagram account -> assign **Tester** and **Instagram Tester** -> send. That
+   account then needs to **accept** the pending tester invite (check notifications/pending
+   invites on that account) before the OAuth flow will work.
 1. Meta app dashboard -> **Instagram API** -> **"API setup with Instagram login"**.
 2. Under that page, add the niche's Instagram account (via "Add account"). It'll show up in
    a list with its real Instagram-scoped user ID directly (this **is** the ID needed for
