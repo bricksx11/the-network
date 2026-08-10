@@ -10,6 +10,14 @@ Usage:
 
 Expects lines shaped like `key = value` (extra indented continuation lines, like the
 tiktok_refresh_token note, are ignored -- only the first line of each key is read).
+
+Each platform's credentials are independent and optional -- matching src/credentials.py's
+own "omit what a niche doesn't have configured yet" design, since a niche is commonly rolled
+out platform-by-platform, not all four at once. IMPORTANT: this means a typo'd key name gets
+silently dropped rather than caught -- if a value you know you added isn't showing up, check
+the key spelling against KNOWN_KEYS below before assuming the platform is just "not set up
+yet". YouTube is the one exception: its three fields (refresh_token/client_id/client_secret)
+are all-or-nothing, since a partially-filled youtube block is broken, not just incomplete.
 """
 
 from __future__ import annotations
@@ -17,7 +25,7 @@ from __future__ import annotations
 import json
 import sys
 
-REQUIRED_KEYS = {
+KNOWN_KEYS = {
     "ig_access_token",
     "meta_access_token",
     "tiktok_access_token",
@@ -25,6 +33,7 @@ REQUIRED_KEYS = {
     "youtube_client_id",
     "youtube_client_secret",
 }
+YOUTUBE_KEYS = {"youtube_refresh_token", "youtube_client_id", "youtube_client_secret"}
 
 
 def parse_creds_file(path: str) -> dict[str, str]:
@@ -37,7 +46,7 @@ def parse_creds_file(path: str) -> dict[str, str]:
         # strip inline `(Aiden Barber Page token)`-style annotations from the key itself
         key = key.split("(")[0].strip()
         value = rest.strip()
-        if key in REQUIRED_KEYS and value:
+        if key in KNOWN_KEYS and value:
             values[key] = value
     return values
 
@@ -48,19 +57,30 @@ if __name__ == "__main__":
         sys.exit(1)
 
     values = parse_creds_file(sys.argv[1])
-    missing = REQUIRED_KEYS - values.keys()
-    if missing:
-        print(f"missing/blank values for: {', '.join(sorted(missing))}", file=sys.stderr)
+
+    youtube_present = YOUTUBE_KEYS & values.keys()
+    if youtube_present and youtube_present != YOUTUBE_KEYS:
+        missing = YOUTUBE_KEYS - youtube_present
+        print(f"youtube block is partially filled -- missing: {', '.join(sorted(missing))}", file=sys.stderr)
         sys.exit(1)
 
-    blob = {
-        "meta_access_token": values["meta_access_token"],
-        "ig_access_token": values["ig_access_token"],
-        "tiktok_access_token": values["tiktok_access_token"],
-        "youtube": {
+    blob: dict = {}
+    if "meta_access_token" in values:
+        blob["meta_access_token"] = values["meta_access_token"]
+    if "ig_access_token" in values:
+        blob["ig_access_token"] = values["ig_access_token"]
+    if "tiktok_access_token" in values:
+        blob["tiktok_access_token"] = values["tiktok_access_token"]
+    if youtube_present == YOUTUBE_KEYS:
+        blob["youtube"] = {
             "refresh_token": values["youtube_refresh_token"],
             "client_id": values["youtube_client_id"],
             "client_secret": values["youtube_client_secret"],
-        },
-    }
+        }
+
+    if not blob:
+        print("no known credential values found in that file -- nothing to push", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"platforms included: {', '.join(sorted(blob.keys()))}", file=sys.stderr)
     print(json.dumps(blob))
