@@ -1,6 +1,14 @@
 """One-off verification script -- NOT part of the pipeline. Confirms a minted YouTube
-refresh token actually works and resolves to the expected channel, by making a real,
-lightweight API call (channels.list mine=true) -- no video upload involved.
+refresh token is actually valid (not expired/revoked) by refreshing it for a real access
+token -- not by calling a YouTube Data API method.
+
+Deliberately does NOT call something like channels.list: that needs a broader scope
+(youtube / youtube.readonly) than youtube.upload, which is all the pipeline actually
+requests (confirmed via a real 403 insufficientPermissions error when this script first
+tried channels.list -- a mismatch in this verification script, not a problem with the
+token or the pipeline's actual videos.insert upload call, which youtube.upload does cover).
+Refreshing the token is scope-agnostic and tests the one thing that actually matters here:
+is this refresh_token/client_id/client_secret combo still valid.
 
 Run this yourself -- values are read from env vars so nothing is typed to or seen by
 anything else:
@@ -15,10 +23,9 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.publish.youtube import YouTubeCredentials, build_youtube_client
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 
 if __name__ == "__main__":
     refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN")
@@ -31,16 +38,15 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    client = build_youtube_client(
-        YouTubeCredentials(refresh_token=refresh_token, client_id=client_id, client_secret=client_secret)
+    credentials = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        client_id=client_id,
+        client_secret=client_secret,
+        token_uri="https://oauth2.googleapis.com/token",
     )
-    response = client.channels().list(part="snippet", mine=True).execute()
+    credentials.refresh(Request())
 
-    items = response.get("items", [])
-    if not items:
-        print("token is valid but no channel found for this account", file=sys.stderr)
-        sys.exit(1)
-
-    channel = items[0]
-    print(f"channel_id: {channel['id']}")
-    print(f"channel_title: {channel['snippet']['title']}")
+    print("refresh succeeded -- token is valid")
+    print(f"granted scopes: {credentials.scopes}")
+    print(f"access token expires at: {credentials.expiry}")
