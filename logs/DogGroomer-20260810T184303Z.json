@@ -1,0 +1,35 @@
+{
+  "niche": "DogGroomer",
+  "timestamp": "2026-08-10T18:42:01.694277+00:00",
+  "shape": "money_reveal",
+  "trend_signal": null,
+  "images_used": [
+    "assets/avatars/DogGroomer/marketing/starter-grooming-2.png",
+    "assets/avatars/DogGroomer/marketing/starter-grooming-1.png",
+    "assets/avatars/DogGroomer/marketing/bizyr-ai-app-porduct.png",
+    "assets/avatars/DogGroomer/marketing/chilling-1.png"
+  ],
+  "music_track": "assets/music/tiktok-sourced/track-5.mp3",
+  "carousel_output": [
+    "DogGroomer/carousel/slide-1.jpg",
+    "DogGroomer/carousel/slide-2.jpg",
+    "DogGroomer/carousel/slide-3.jpg",
+    "DogGroomer/carousel/slide-4.jpg"
+  ],
+  "video_output": "DogGroomer/video/reel.mp4",
+  "publish_results": {
+    "instagram": {
+      "carousel_post_id": "18084837263682501",
+      "reel_post_id": "17858100192695852"
+    },
+    "facebook": {
+      "skipped": "not configured"
+    },
+    "tiktok": {
+      "publish_id": "p_inbox_url~v2.7672475064788486166"
+    },
+    "youtube": {
+      "video_id": "1nsTPa0jw8U"
+    }
+  }
+}
