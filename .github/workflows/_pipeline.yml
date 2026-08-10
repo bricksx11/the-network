@@ -1,9 +1,8 @@
 name: pipeline
 
 # Reusable workflow -- both daily-post.yml (cron) and dispatch-post.yml (shortcut trigger)
-# call this. Matrix over niches; currently just Barber (the only niche with a populated
-# image library) -- add more entries here as new niches are provisioned, per the plan's
-# "adding a niche is mostly config, not new code."
+# call this. Matrix over niches -- add an entry here as each new niche is provisioned, per
+# the plan's "adding a niche is mostly config, not new code."
 on:
   workflow_call:
     inputs:
@@ -22,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        niche: [Barber]
+        niche: [Barber, DogGroomer]
     steps:
       - uses: actions/checkout@v4
 
@@ -51,6 +50,7 @@ jobs:
           # runtime by constructing NICHE_CREDS__<NICHE> from the niche name in Python,
           # which has no such restriction. Add one line per niche as they're provisioned.
           NICHE_CREDS__BARBER: ${{ secrets.NICHE_CREDS__BARBER }}
+          NICHE_CREDS__DOGGROOMER: ${{ secrets.NICHE_CREDS__DOGGROOMER }}
         run: python -m src.orchestrator ${{ matrix.niche }}
 
       - name: Commit run log
