@@ -106,24 +106,30 @@ def main() -> int:
 
     print(f"=== Cleanup for niche: {args.niche} ===")
 
-    if creds.ig_access_token and ig_id:
-        print(f"Instagram ({ig_id}):")
-        n = delete_all_instagram_media(ig_id, creds.ig_access_token)
-        print(f"  -> {n} media items deleted")
-    else:
-        print("Instagram: skipped (no token or no business_account_id configured)")
+    # Confirmed via a real failed run (not assumed): Instagram Graph API rejects DELETE on
+    # published media for Instagram-Login-based tokens ("does not support this operation"),
+    # even though the endpoint exists on paper. No programmatic deletion path -- must be
+    # done by hand in the Instagram app, same situation as TikTok drafts below.
+    print("Instagram: NOT deleted -- the API rejects deleting published media for this "
+          "account type. Delete posts by hand in the Instagram app.")
 
     if creds.meta_access_token and page_id:
         print(f"Facebook ({page_id}):")
-        n = delete_all_facebook_posts(page_id, creds.meta_access_token)
-        print(f"  -> {n} posts deleted")
+        try:
+            n = delete_all_facebook_posts(page_id, creds.meta_access_token)
+            print(f"  -> {n} posts deleted")
+        except Exception as e:
+            print(f"  -> FAILED: {e}", file=sys.stderr)
     else:
         print("Facebook: skipped (no token, or disabled/no page_id for this niche)")
 
     if creds.youtube:
         print("YouTube:")
-        n = delete_all_youtube_uploads(creds.youtube)
-        print(f"  -> {n} videos deleted")
+        try:
+            n = delete_all_youtube_uploads(creds.youtube)
+            print(f"  -> {n} videos deleted")
+        except Exception as e:
+            print(f"  -> FAILED: {e}", file=sys.stderr)
     else:
         print("YouTube: skipped (no credentials configured)")
 
