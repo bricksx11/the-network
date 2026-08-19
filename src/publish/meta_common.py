@@ -92,6 +92,12 @@ def graph_get(path: str, access_token: str, api_base: str = GRAPH_API_BASE, **pa
     return response.json()
 
 
+def graph_delete(path: str, access_token: str, api_base: str = GRAPH_API_BASE, **params) -> dict:
+    response = requests.delete(f"{api_base}/{path}", params={**params, "access_token": access_token})
+    _raise_for_graph_error(response)
+    return response.json()
+
+
 def wait_for_container_ready(
     container_id: str,
     access_token: str,

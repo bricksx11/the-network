@@ -1,0 +1,41 @@
+name: cleanup-posts
+
+# One-off, manually-triggered only (never scheduled) -- deletes every Instagram/Facebook/
+# YouTube post the pipeline has published for a niche. TikTok drafts can't be deleted via
+# API (see scripts/delete_all_posts.py's docstring) -- clear those by hand in the app.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - niche: Barber
+            ig_business_account_id: "17841438706552035"
+            fb_page_id: "1227801577088727"
+          - niche: DogGroomer
+            ig_business_account_id: "17841437271348468"
+            fb_page_id: "" # Facebook not enabled for this niche (phone verification cooldown)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Delete all posts for ${{ matrix.niche }}
+        env:
+          NICHE_CREDS__BARBER: ${{ secrets.NICHE_CREDS__BARBER }}
+          NICHE_CREDS__DOGGROOMER: ${{ secrets.NICHE_CREDS__DOGGROOMER }}
+          IG_BUSINESS_ACCOUNT_ID: ${{ matrix.ig_business_account_id }}
+          FB_PAGE_ID: ${{ matrix.fb_page_id }}
+        run: python -m scripts.delete_all_posts --niche ${{ matrix.niche }}
