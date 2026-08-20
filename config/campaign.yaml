@@ -1,0 +1,10 @@
+# Current CTA campaign, read by the script generator instead of a hardcoded CTA.
+# One place to update when the real waitlist/app link is ready -- editing this file changes
+# every future post's CTA without touching niche configs or regenerating anything.
+
+cta_text: "Join the waitlist -- link in bio"
+cta_style: "comment_or_bio" # how the CTA should be framed: driving to a comment-bait reply, or straight to bio link
+waitlist_url: null # TODO: user will send the real link -- generator falls back to "link in bio" phrasing while this is null
+notes: >
+  All posts from now on should drive toward the waitlist/app, not the old generic
+  "comment CALLS and I'll send you the app" framing. Exact link/wording TBD.

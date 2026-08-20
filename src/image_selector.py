@@ -21,11 +21,14 @@ locked product image into general rotation.
 
 from __future__ import annotations
 
+import logging
 import random
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 VALID_ROLES = ("host", "pool", "product")
 GENERAL_ROTATION_ROLES = ("host", "pool")
@@ -99,6 +102,7 @@ def select_images(
     niche_marketing_dir: Path,
     count: int,
     rng: random.Random | None = None,
+    recent_images: set[str] | None = None,
 ) -> list[ImageAsset]:
     """Select `count` images for one piece of content.
 
@@ -108,11 +112,19 @@ def select_images(
     dedicated posts about that specific product, not general rotation. Raises
     ImageSelectorError if there's no host image, or not enough general-rotation images to
     fill `count` slots without repeating one within this single piece.
+
+    `recent_images` (paths as strings, from content_history.recent_image_paths) is avoided
+    where possible -- e.g. a 19-image library and 10 runs' worth of recent history can still
+    leave enough headroom most days, but a small library will eventually run out. Falls back
+    to allowing a repeat rather than raising, since re-showing an image after only ~10 posts
+    is a much smaller problem than refusing to post at all; logs a warning when that happens
+    so it's visible in run output that the library needs a top-up.
     """
     if count < 1:
         raise ValueError("count must be >= 1")
 
     rng = rng or random.Random()
+    recent_images = recent_images or set()
     all_assets = list_niche_images(niche_marketing_dir)
     assets = [a for a in all_assets if a.role in GENERAL_ROTATION_ROLES]
 
@@ -129,8 +141,27 @@ def select_images(
             f"{count} to avoid repeating an image within one piece of content"
         )
 
-    slide_one = rng.choice(hosts)
+    fresh_hosts = [a for a in hosts if str(a.path) not in recent_images]
+    if not fresh_hosts:
+        logger.warning(
+            "%s: every host-role image was used recently -- library needs a top-up, "
+            "allowing a repeat for slide 1",
+            niche_marketing_dir,
+        )
+        fresh_hosts = hosts
+    slide_one = rng.choice(fresh_hosts)
+
     remaining_pool = [a for a in assets if a.path != slide_one.path]
-    rest = rng.sample(remaining_pool, count - 1)
+    fresh_pool = [a for a in remaining_pool if str(a.path) not in recent_images]
+    if len(fresh_pool) < count - 1:
+        logger.warning(
+            "%s: not enough unused images left (%d fresh, need %d) -- library needs a "
+            "top-up, allowing repeats",
+            niche_marketing_dir,
+            len(fresh_pool),
+            count - 1,
+        )
+        fresh_pool = remaining_pool
+    rest = rng.sample(fresh_pool, count - 1)
 
     return [slide_one, *rest]

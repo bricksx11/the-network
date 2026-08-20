@@ -83,6 +83,94 @@ PROVEN_SHAPES: dict[str, ShapeRequirements] = {
             "models, not generic advice) -> Bizyr as the 4th item, framed as gear not a pitch -> CTA."
         ),
     ),
+    "contrarian_take": ShapeRequirements(
+        name="contrarian_take",
+        min_beats=2,
+        max_beats=3,
+        requires_reveal=True,
+        requires_cta=True,
+        description=(
+            "Hook (a genuine contrarian position on a real live trade argument, not fence-"
+            "sitting) -> 2-3 beats making the actual case -> reveal ties the position back to "
+            "the underlying problem Bizyr solves -> CTA."
+        ),
+    ),
+    "story_lesson": ShapeRequirements(
+        name="story_lesson",
+        min_beats=2,
+        max_beats=3,
+        requires_reveal=True,
+        requires_cta=True,
+        description=(
+            "Hook (a specific, named scenario -- 'a shop in Leeds, 3 chairs') -> 2-3 beats "
+            "telling what happened -> reveal is the lesson, tied to Bizyr -> CTA."
+        ),
+    ),
+    "named_client_type": ShapeRequirements(
+        name="named_client_type",
+        min_beats=1,
+        max_beats=2,
+        requires_reveal=True,
+        requires_cta=True,
+        description=(
+            "Hook names a recognisable client/customer archetype the audience will instantly "
+            "identify ('the but-I-brush-him-every-day client') -> 1-2 beats fleshing it out -> "
+            "reveal ties the archetype's cost back to Bizyr -> CTA."
+        ),
+    ),
+    "receipt_breakdown": ShapeRequirements(
+        name="receipt_breakdown",
+        min_beats=2,
+        max_beats=4,
+        requires_reveal=True,
+        requires_cta=True,
+        description=(
+            "Hook states a real, specific number from the trade (rent, price, hours) -> 2-4 "
+            "beats breaking down the maths -> reveal is what's actually left / actually lost, "
+            "tied to Bizyr -> CTA."
+        ),
+    ),
+    "how_to_script": ShapeRequirements(
+        name="how_to_script",
+        min_beats=1,
+        max_beats=3,
+        requires_reveal=True,
+        requires_cta=True,
+        description=(
+            "Hook promises a copyable script/template (a rebooking line, a deposit-policy "
+            "message) -> 1-3 beats giving the actual wording -> reveal ties it to Bizyr -> CTA."
+        ),
+    ),
+    "myth_vs_reality": ShapeRequirements(
+        name="myth_vs_reality",
+        min_beats=2,
+        max_beats=2,
+        requires_reveal=True,
+        requires_cta=True,
+        description="Hook states a common belief -> 2 beats (the myth, the reality) -> reveal -> CTA.",
+    ),
+    "checklist": ShapeRequirements(
+        name="checklist",
+        min_beats=3,
+        max_beats=6,
+        requires_reveal=True,
+        requires_cta=True,
+        description=(
+            "Hook frames a checklist ('signs your diary is leaking money') -> 3-6 concrete "
+            "checkable items -> reveal ties the gap to Bizyr -> CTA."
+        ),
+    ),
+    "question_hook": ShapeRequirements(
+        name="question_hook",
+        min_beats=2,
+        max_beats=3,
+        requires_reveal=True,
+        requires_cta=True,
+        description=(
+            "Hook is a direct rhetorical question that makes an unconscious cost conscious -> "
+            "2-3 beats answering/exploring it -> reveal -> CTA."
+        ),
+    ),
 }
 
 

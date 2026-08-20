@@ -14,6 +14,8 @@ from pathlib import Path
 
 import yaml
 
+from src.caption_builder import build_caption
+from src.content_history import load_recent, recent_image_paths
 from src.credentials import load_niche_credentials
 from src.image_selector import select_images
 from src.publish.facebook import publish_carousel as fb_publish_carousel
@@ -25,6 +27,7 @@ from src.publish.youtube import build_youtube_client, upload_private_video
 from src.render.carousel import SlideText, render_carousel
 from src.render.video import render_video
 from src.research_gate import ResearchGateError, run_research_gate
+from src.script_generator import ScriptGenerationError
 from src.script_provider import get_todays_script
 
 GITHUB_OWNER = "bricksx11"
@@ -32,10 +35,19 @@ GITHUB_REPO = "the-network"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 NICHES_CONFIG_PATH = REPO_ROOT / "config" / "niches.yaml"
+CONTENT_INTELLIGENCE_DIR = REPO_ROOT / "config" / "content_intelligence"
+CAMPAIGN_CONFIG_PATH = REPO_ROOT / "config" / "campaign.yaml"
 MUSIC_DIR = REPO_ROOT / "assets" / "music"
 LOGS_DIR = REPO_ROOT / "logs"
 
 AUDIO_EXTENSIONS = (".mp3", ".m4a", ".wav", ".aac")
+
+# Script generation is done once per run and reused across every platform's carousel/video --
+# "instagram" is the primary/canonical platform for content flavor (carousel-first pipeline);
+# caption_builder.py handles the real per-platform variation on top of that single script.
+PRIMARY_GENERATION_PLATFORM = "instagram"
+
+MAX_AVOID_WORDS_ATTEMPTS = 2  # first attempt + one regenerate before failing loudly
 
 
 class OrchestratorError(Exception):
@@ -48,6 +60,33 @@ def load_niche_config(niche: str) -> dict:
     if niche not in niches:
         raise OrchestratorError(f"unknown niche {niche!r} -- not present in {NICHES_CONFIG_PATH}")
     return niches[niche]
+
+
+def load_content_intelligence(niche: str) -> dict:
+    path = CONTENT_INTELLIGENCE_DIR / f"{niche}.yaml"
+    if not path.exists():
+        raise OrchestratorError(f"no content-intelligence config for niche {niche!r} -- expected {path}")
+    return yaml.safe_load(path.read_text()) or {}
+
+
+def load_campaign_config() -> dict:
+    if not CAMPAIGN_CONFIG_PATH.exists():
+        return {}
+    return yaml.safe_load(CAMPAIGN_CONFIG_PATH.read_text()) or {}
+
+
+def _find_avoid_word(script, content_intelligence: dict) -> str | None:
+    """Scan the generated script's actual text against the niche's avoid_words list --
+    the repetition/shape checks inside generate_script() don't check wording against this
+    list, only against recent history and PROVEN_SHAPES structure, so this is a genuinely
+    separate check (plan step 8).
+    """
+    avoid_words = content_intelligence.get("avoid_words", [])
+    text = " ".join([script.hook, *script.beats, script.reveal or "", script.cta]).lower()
+    for phrase in avoid_words:
+        if phrase.lower() in text:
+            return phrase
+    return None
 
 
 def find_music_track(rng: random.Random) -> Path | None:
@@ -93,11 +132,33 @@ def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None, publi
     niche_config = load_niche_config(niche)
     image_dir = REPO_ROOT / niche_config["image_dir"]
 
-    script = get_todays_script(niche)
+    content_intelligence = load_content_intelligence(niche)
+    campaign = load_campaign_config()
+    recent_history = load_recent(niche)
+
+    script, topic_summary = get_todays_script(
+        niche, PRIMARY_GENERATION_PLATFORM, content_intelligence, campaign, recent_history
+    )
+    avoid_hit = _find_avoid_word(script, content_intelligence)
+    for _ in range(MAX_AVOID_WORDS_ATTEMPTS - 1):
+        if avoid_hit is None:
+            break
+        script, topic_summary = get_todays_script(
+            niche, PRIMARY_GENERATION_PLATFORM, content_intelligence, campaign, recent_history
+        )
+        avoid_hit = _find_avoid_word(script, content_intelligence)
+    if avoid_hit is not None:
+        raise OrchestratorError(
+            f"generated script for {niche} still contains banned phrase {avoid_hit!r} after "
+            f"{MAX_AVOID_WORDS_ATTEMPTS} attempts -- stopping rather than publishing generic AI copy"
+        )
+
     gate_result = run_research_gate(script, trend_seed_keyword=niche_config.get("trend_seed_keyword"))
 
     slide_texts = build_slide_texts(script)
-    images = select_images(image_dir, count=len(slide_texts), rng=rng)
+    images = select_images(
+        image_dir, count=len(slide_texts), rng=rng, recent_images=recent_image_paths(recent_history)
+    )
 
     carousel_dir = out_dir / niche / "carousel"
     carousel_paths = render_carousel(images, slide_texts, carousel_dir)
@@ -116,6 +177,8 @@ def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None, publi
         "niche": niche,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "shape": gate_result.shape,
+        "hook": script.hook,
+        "topic_summary": topic_summary,
         "trend_signal": asdict(gate_result.trend_signal) if gate_result.trend_signal else None,
         "images_used": [str(a.path.relative_to(REPO_ROOT)) for a in images],
         "music_track": str(music_track.relative_to(REPO_ROOT)) if music_track else None,
@@ -125,7 +188,14 @@ def run_niche(niche: str, out_dir: Path, rng: random.Random | None = None, publi
 
     if publish:
         run_record["publish_results"] = publish_niche(
-            niche, niche_config, carousel_paths, video_path, script, has_music=music_track is not None
+            niche,
+            niche_config,
+            carousel_paths,
+            video_path,
+            script,
+            content_intelligence,
+            campaign,
+            has_music=music_track is not None,
         )
 
     LOGS_DIR.mkdir(exist_ok=True)
@@ -142,6 +212,8 @@ def publish_niche(
     carousel_paths: list[Path],
     video_path: Path,
     script,
+    content_intelligence: dict,
+    campaign: dict,
     repo_root: Path = REPO_ROOT,
     github_owner: str = GITHUB_OWNER,
     github_repo: str = GITHUB_REPO,
@@ -188,17 +260,18 @@ def publish_niche(
         if needs_video_url:
             video_url = urls[len(carousel_paths)]
 
-    caption = f"{script.hook}\n\n{script.cta}"
-
     ig = ig_config
     if ig.get("enabled") and ig.get("business_account_id") and creds.ig_access_token:
-        carousel_id = ig_publish_carousel(ig["business_account_id"], carousel_urls, caption, creds.ig_access_token)
+        ig_caption = build_caption(script, content_intelligence, campaign, "instagram")
+        carousel_id = ig_publish_carousel(
+            ig["business_account_id"], carousel_urls, ig_caption, creds.ig_access_token
+        )
         ig_result: dict = {"carousel_post_id": carousel_id}
         if not ig.get("post_reel", True):
             ig_result["reel_skipped"] = "post_reel disabled in config -- carousel only for now"
         elif has_music:
             ig_result["reel_post_id"] = ig_publish_reel(
-                ig["business_account_id"], video_url, caption, creds.ig_access_token
+                ig["business_account_id"], video_url, ig_caption, creds.ig_access_token
             )
         else:
             ig_result["reel_skipped"] = "no licensed music available -- silent Reel not auto-published"
@@ -208,14 +281,16 @@ def publish_niche(
 
     fb = platforms.get("facebook", {})
     if fb.get("enabled") and fb.get("page_id") and creds.meta_access_token:
-        post_id = fb_publish_carousel(fb["page_id"], carousel_urls, caption, creds.meta_access_token)
+        fb_caption = build_caption(script, content_intelligence, campaign, "facebook")
+        post_id = fb_publish_carousel(fb["page_id"], carousel_urls, fb_caption, creds.meta_access_token)
         results["facebook"] = {"post_id": post_id}
     else:
         results["facebook"] = {"skipped": "not configured"}
 
     tt = platforms.get("tiktok", {})
     if tt.get("enabled") and creds.tiktok_access_token:
-        publish_id = upload_carousel_to_drafts(carousel_urls, script.hook, script.cta, creds.tiktok_access_token)
+        tt_caption = build_caption(script, content_intelligence, campaign, "tiktok")
+        publish_id = upload_carousel_to_drafts(carousel_urls, script.hook, tt_caption, creds.tiktok_access_token)
         # init returning a publish_id only means TikTok accepted the request, not that it
         # actually finished pulling/processing the images -- confirmed the hard way (a real
         # publish_id whose actual status later came back FAILED, file_format_check_failed).
@@ -229,10 +304,12 @@ def publish_niche(
     if yt.get("enabled") and creds.youtube:
         youtube_client = build_youtube_client(creds.youtube)
         # niche_config's cta_override is the actual source of truth (e.g. "Link in bio" --
-        # YouTube has no DM/comment-bait culture) -- script.platform_cta_overrides is only
-        # a fallback for when a niche's config hasn't set one explicitly.
-        cta = yt.get("cta_override") or script.platform_cta_overrides.get("youtube", script.cta)
-        video_id = upload_private_video(youtube_client, video_path, script.hook, f"{script.reveal}\n\n{cta}")
+        # YouTube has no DM/comment-bait culture) -- takes priority over campaign.yaml's
+        # default CTA via caption_builder's cta_override param.
+        yt_description = build_caption(
+            script, content_intelligence, campaign, "youtube", cta_override=yt.get("cta_override")
+        )
+        video_id = upload_private_video(youtube_client, video_path, script.hook, yt_description)
         results["youtube"] = {"video_id": video_id}
     else:
         results["youtube"] = {"skipped": "not configured"}
@@ -247,6 +324,6 @@ if __name__ == "__main__":
     try:
         record = run_niche(niche, REPO_ROOT / "render_output")
         print(json.dumps(record, indent=2))
-    except (OrchestratorError, ResearchGateError) as e:
+    except (OrchestratorError, ResearchGateError, ScriptGenerationError) as e:
         print(f"pipeline stopped: {e}", file=sys.stderr)
         sys.exit(1)

@@ -1,0 +1,99 @@
+# Distilled research (UK barber niche, 2025-2026) that the script generator draws from
+# directly -- structured data, not prose baked into a prompt. See the deep-research report
+# in the planning session that produced this file for full sourcing/citations; only the
+# load-bearing, well-sourced findings are kept here. Numbers marked [vendor] are directional
+# only (no published methodology) -- fine for a hook's *feel*, don't present as verified fact.
+
+positioning: >
+  Diary/margin defence for a barber-owner, not generic "grow your business" hype. Barbers are
+  cash-literate and pay-per-cut -- numbers that map to a real week (chair rent, cuts/week,
+  no-shows) land far harder than abstract business advice.
+
+audience_identity: "UK barbershop owner or self-employed barber, working behind the chair"
+
+terminology:
+  use:
+    - fade, skin fade, taper, taper fade, blend, blending
+    - line-up, edge-up, shape-up
+    - chair rent, rent-a-chair, the diary, the book, column (a barber's day in the diary)
+    - client (not "customer"), regs (regulars), on the tools, behind the chair
+    - walk-ins, no-show, rebook, dead day, quiet one, a full column
+    - 'grade 1 / grade 2 (not "#1 guard" -- that''s US phrasing)'
+    - quid, £, "half four" style times
+  avoid:
+    - solution, platform, streamline, seamless, leverage, empower, journey, ecosystem
+    - "in today's fast-paced world"
+    - "unlock your potential"
+    - "take it to the next level"
+    - 'customer (say client)'
+    - 'calendar (say diary/book)'
+    - 'workstation (say chair)'
+
+pain_points:
+  - "the phone rings mid-fade -- answer it and ruin the blend, ignore it and lose the booking"
+  - "chair rent is due whether the column's full or not"
+  - "no-shows and late cancellations are ~8% of a week's bookings gone (4% no-show + 4% cancel)"
+  - "new client acquisition has gotten harder -- rebooking existing clients matters more than chasing new ones"
+  - "the £10 shop down the road undercutting on price, real margin pressure in a saturated UK market (18,411+ registered shops, +50% since 2018)"
+  - "quiet Mondays/Tuesdays vs slammed Friday/Saturday -- uneven week, same rent"
+  - "hiring and staff retention -- self-employed/commission models make it hard to build a team that stays"
+  - "putting prices up and being scared of losing clients over it"
+
+real_numbers:  # ground hooks in specifics -- never invent new stats at generation time
+  - "UK average barber chair rent: £170/week (range £32-£500), verified across 79 real listings"
+  - "London chair rent ~£308/wk vs Sheffield ~£102/wk -- London is 2.2x Sheffield's rent but London cuts are only ~1.1x the price"
+  - "barbershop no-show rate ~4%, cancellation rate ~4% -- roughly 8% of a week's bookings lost"
+  - "new-guest visits at barbershops fell 17% in 2025, the steepest decline of any beauty/wellness vertical"
+  - "median barbershop staff utilisation is 56%; top performers hit 75%"
+  - "21% of UK hair/barber salons reported operating at a loss (NHBF, April 2025)"
+  - "[vendor, directional only] salons miss an estimated 35-40% of booking calls during peak hours because staff are on the tools"
+
+avoid_words:
+  - "unlock your potential"
+  - "take your business to the next level"
+  - "game-changing"
+  - "streamline"
+  - "seamless"
+  - "leverage"
+  - "empower"
+  - "in today's fast-paced world"
+
+hook_archetypes:
+  - "money-in-the-room: a real number a barber recognises from their own week (chair rent, cuts needed to break even, % lost to no-shows)"
+  - "loss-aversion: framing around what's already being lost, not what could be gained"
+  - "contrarian/hot-take on a live trade argument (deposits, walk-ins vs appointments, chair rent, pricing)"
+  - "named case study: a specific shop/scenario ('a 3-chair shop, 11 gaps a week')"
+  - "callout/identity: 'if you're a UK barber still doing X, this one's for you'"
+
+format_tiers:
+  tier_1_strong:
+    - "receipt/number breakdown (rent, cuts/week, what's actually left)"
+    - "mistake framed as money already lost, not generic advice"
+    - "business before/after (empty diary vs full diary, same visual grammar as a fade reveal)"
+    - "contrarian hot take on a real trade argument -- needs a genuine position, not fence-sitting"
+    - "named story/case study -- the trade is anecdote-driven, shop-to-shop gossip travels"
+  tier_2_works_if_useful:
+    - "how-to with a copyable script (rebooking line, price-increase message, deposit policy wording)"
+    - "terminology/explainer framed in business terms (e.g. 'utilisation = how full your column actually is')"
+  tier_3_avoid_or_rare:
+    - "motivational quotes over a barbershop photo -- huge volume, zero differentiation"
+    - "listicles with no real numbers in them"
+    - "anything with stock-photo suits/handshakes"
+
+platform_notes:
+  instagram: >
+    Carousels for the argument (number breakdowns, scripts, contrarian takes) -- carousels
+    get ~6.9% engagement rate vs ~3.3% for Reels, and 20-slide carousels are allowed. Reels
+    for reach (Reels reach ~2x more non-followers). Captions are Google-indexed since July
+    2025 -- phrase the first line like a real search query a barber would type. Design every
+    post to be "sendable" (sends-per-reach is a top ranking signal) -- write for "send this
+    to the barber who never rebooks", not just for likes.
+  tiktok: >
+    First 3 seconds decide distribution. TikTok now indexes spoken audio + on-screen text +
+    caption for search -- say the real keyword out loud, not just in text. Niche authority
+    (consistently covering the same problem set) beats trend-chasing in the 2026 algorithm.
+    ~30% of viewing is muted -- on-screen text is not optional.
+  youtube_shorts: >
+    View counts changed 31 March 2025 to count from playback start with no minimum watch time
+    -- raw views are now closer to vanity; judge by Engaged Views / average % viewed instead.
+    Shorts can run up to 3 minutes now, but for this content 30-45s is the workable range.

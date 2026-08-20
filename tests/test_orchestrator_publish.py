@@ -69,7 +69,7 @@ def test_publish_niche_hosts_carousel_and_video_in_one_call(mocker, full_credent
     carousel_paths = [tmp_path / "slide-1.png", tmp_path / "slide-2.png"]
     video_path = tmp_path / "reel.mp4"
 
-    results = publish_niche("Barber", FULL_NICHE_CONFIG, carousel_paths, video_path, make_script())
+    results = publish_niche("Barber", FULL_NICHE_CONFIG, carousel_paths, video_path, make_script(), {}, {})
 
     # exactly one hosting push, containing both carousel images AND the video together
     assert mock_host.call_count == 1
@@ -93,7 +93,7 @@ def test_publish_niche_skips_reel_but_still_posts_carousel_when_no_music(mocker,
     mocker.patch("src.orchestrator.upload_private_video", return_value="yt-id")
 
     results = publish_niche(
-        "Barber", FULL_NICHE_CONFIG, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script(), has_music=False
+        "Barber", FULL_NICHE_CONFIG, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script(), {}, {}, has_music=False
     )
 
     mock_reel.assert_not_called()
@@ -129,7 +129,7 @@ def test_publish_niche_propagates_tiktok_failure_after_init_looked_fine(mocker, 
     }
 
     with pytest.raises(TikTokAPIError, match="file_format_check_failed"):
-        publish_niche("Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", make_script())
+        publish_niche("Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", make_script(), {}, {})
 
 
 def test_publish_niche_skips_reel_when_post_reel_disabled_even_with_music(mocker, full_credentials_env, tmp_path):
@@ -152,7 +152,7 @@ def test_publish_niche_skips_reel_when_post_reel_disabled_even_with_music(mocker
     }
 
     results = publish_niche(
-        "Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", make_script(), has_music=True
+        "Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", make_script(), {}, {}, has_music=True
     )
 
     mock_reel.assert_not_called()
@@ -177,7 +177,7 @@ def test_publish_niche_youtube_cta_prefers_config_override(mocker, full_credenti
     }
     script = make_script(platform_cta_overrides={"youtube": "Script says this"})
 
-    publish_niche("Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", script)
+    publish_niche("Barber", niche_config, [tmp_path / "s1.jpg"], tmp_path / "r.mp4", script, {}, {})
 
     description = mock_upload.call_args.args[3]
     assert "Config says this instead" in description
@@ -203,7 +203,7 @@ def test_publish_niche_skips_platforms_missing_ids(mocker, full_credentials_env,
     }
 
     results = publish_niche(
-        "Barber", niche_config, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script()
+        "Barber", niche_config, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script(), {}, {}
     )
 
     assert results["instagram"] == {"skipped": "not configured"}
@@ -233,7 +233,7 @@ def test_publish_niche_skips_platform_missing_credentials(mocker, tmp_path, monk
     }
 
     results = publish_niche(
-        "Barber", niche_config, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script()
+        "Barber", niche_config, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script(), {}, {}
     )
 
     assert results["instagram"] == {"skipped": "not configured"}
@@ -254,7 +254,7 @@ def test_publish_niche_does_not_host_anything_when_no_platform_needs_it(mocker, 
         }
     }
 
-    publish_niche("Barber", niche_config, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script())
+    publish_niche("Barber", niche_config, [tmp_path / "s1.png"], tmp_path / "r.mp4", make_script(), {}, {})
     mock_host.assert_not_called()
 
 
@@ -262,7 +262,10 @@ def _mock_render_pipeline(mocker, tmp_path):
     """Mocks everything upstream of publish_niche so these tests exercise only run_niche's
     publish=True/False branching, not rendering itself (already covered elsewhere).
     """
-    mocker.patch("src.orchestrator.get_todays_script", return_value=make_script())
+    mocker.patch("src.orchestrator.get_todays_script", return_value=(make_script(), "topic summary"))
+    mocker.patch("src.orchestrator.load_content_intelligence", return_value={})
+    mocker.patch("src.orchestrator.load_campaign_config", return_value={})
+    mocker.patch("src.orchestrator.load_recent", return_value=[])
     mocker.patch(
         "src.orchestrator.run_research_gate",
         return_value=mocker.MagicMock(shape="money_reveal", trend_signal=None),

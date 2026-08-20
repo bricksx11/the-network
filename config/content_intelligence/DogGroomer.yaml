@@ -1,0 +1,95 @@
+# Distilled research (UK dog-groomer niche, 2025-2026) that the script generator draws from
+# directly. Deliberately NOT barber content with nouns swapped -- grooming is structurally
+# different: three-party (groomer/dog/owner, dog has no voice), and groomers are demand-rich/
+# capacity-poor (long waitlists), unlike barbers who are demand-poor. The pitch angle differs
+# accordingly: diary defence, not lead gen. Numbers marked [vendor] are directional only.
+
+positioning: >
+  Diary defence, not lead gen. UK groomers are typically capacity-constrained (3-6 week
+  waits, mobile groomers booked months out) -- "get more clients" is the wrong pitch here.
+  The right pitch: stop losing bookings you'd already have taken, stop doing admin at 9pm,
+  protect the diary from no-shows/cancellations, charge properly.
+
+audience_identity: "UK professional dog groomer / grooming salon owner (not a hobbyist, not a pet owner)"
+
+terminology:
+  use:
+    - matting, pelted / pelt, "cotton-wool coat", coat types (double coat, wire coat, corded, drop coat)
+    - line brushing, carding, hand stripping, dematting, flat dry, HV dryer, force drying
+    - FFF (face, feet & fanny), AOT (all over trim), B&B (bath & brush), sanitary trim
+    - the diary, the book, rebook interval (6/8/12 weeks), no-show, DNA (did not attend)
+    - table rental, mobile groomer, home salon, deposit
+    - Teddy bear cut, puppy cut, lion cut, Asian Fusion, poodle feet, clean face/clean feet, topknot
+    - City & Guilds L2/L3, iPET Network L3, BDGA, BIGA, PIF
+  avoid:
+    - 'fur baby (divisive among professionals)'
+    - 'pampering (infantilises the trade -- reads as corporate/consumer, not B2B)'
+    - 'spa day (infantilises the trade -- reads as corporate/consumer, not B2B)'
+    - 'pet parent (US-coded, mixed UK reception)'
+    - 'grooming session (groomers say "a groom", not "a session")'
+
+pain_points:
+  - "owner insists they brush the dog every day -- coat is pelted underneath ('cotton-wool coat')"
+  - "physically can't answer the phone -- hands full of shampoo, or holding a nervous dog on the table with clippers/shears running"
+  - "a cancelled groom loses multiple prepped time slots (bath, dry, finish), and you can't slot in a different breed you hadn't prepped for"
+  - "the Doodle Wars: owners get angry about a necessary shave-down without acknowledging the coat neglect that caused it -- ~40% of doodle appointments arrive with some matting"
+  - "unregulated UK industry -- anyone can call themselves a groomer; 92% of Pet Industry Federation members want licensing"
+  - "most UK groomers are undercharging -- guessing prices from competitors rather than actual costs"
+  - "physical toll -- standing, lifting, repetitive strain; groomer's lung (dust/dander hypersensitivity) is a real occupational hazard"
+  - "difficult/nervous/aggressive dogs -- fear vs aggression, when to stop a groom, muzzle decisions"
+
+real_numbers:  # ground hooks in specifics -- never invent new stats at generation time
+  - "no statutory regulation of dog groomers in the UK -- anyone can practise"
+  - "92% of Pet Industry Federation members think grooming should be licensed"
+  - "~40% of doodle appointments arrive with some degree of matting"
+  - "UK full groom typically £35-£75 (Cockapoo £40-60, London/SE £50-80)"
+  - "self-employed groomer target £25-40/hour after expenses; many make less once rent/insurance/products are factored in"
+  - "[vendor, directional only] deposits can reduce no-shows significantly -- no independently verified methodology, use as a talking point not a hard stat"
+  - "mobile groomers commonly booked 3-6 weeks out; some markets report waits extending further"
+
+avoid_words:
+  - "unlock your potential"
+  - "take your business to the next level"
+  - "pampering"
+  - "spa day"
+  - "streamline"
+  - "seamless"
+  - "leverage"
+  - "empower"
+  - "in today's fast-paced world"
+
+hook_archetypes:
+  - "visual mystery: open on the matted/pelted before-state with no context, force a watch-to-reveal"
+  - "contrarian/permission: validate a private frustration a groomer already feels ('stop apologising for shaving matted dogs')"
+  - "confession: a taboo admission that builds trust ('I fired a client last month and my income went up')"
+  - "named-enemy client type: instant in-group recognition ('the but-I-brush-him-every-day client')"
+  - "number + loss: a specific figure tied to a real cost (no-shows, a lost time slot)"
+  - "rhetorical trap: make an unconscious cost conscious ('how many hours a week do you spend on your phone instead of on the table?')"
+
+format_tiers:
+  tier_1_strong:
+    - "before/after transformation with a business-angle caption, not just a pretty reveal (loop-match first/last frame for TikTok replay value)"
+    - "named client-type content (the show-photo client, the fake-amnesia no-show) -- high tag/share rate among groomers"
+    - "difficult-dog / handling story content -- welfare-adjacent, emotionally legitimate, not gossip"
+    - "pricing/worth/boundaries content -- the most-shared B2B topic in this trade"
+  tier_2_works_if_expert:
+    - "coat-type/technique education, but only if genuinely specific (e.g. 'carding a Lab in shed season', not generic bathing tips)"
+    - "groomer-life humour (double-booked days, groomer speak, the 8am energy gap)"
+  tier_3_avoid_or_adapt:
+    - "creative grooming / pet-safe dye -- big consumer reach but off-brand for a business tool, many working groomers see it as gimmicky"
+    - "generic '5 social media tips for your salon' -- reads instantly as AI/corporate"
+    - "'get more clients' framing -- wrong pitch for a capacity-constrained trade"
+
+platform_notes:
+  instagram: >
+    Carousels for the argument (no-show maths, pricing maths, boundary scripts, licensing/
+    qualification explainers) -- 8-10 slides, bold specific hook on slide 1. Reels for
+    transformation + difficult-dog stories -- loop-match the first and last frame (end on
+    the finished dog, cut back to the pelt) to exploit replay-driven watch time.
+  tiktok: >
+    Groomer-life humour + transformations perform well; niche authority is rewarded over
+    trend-chasing in 2026. Say "dog grooming" / "matted doodle" / "no-shows" out loud in
+    voiceover, not just in text -- TikTok search indexes spoken audio.
+  youtube_shorts: >
+    Judge by Engaged Views / average % viewed, not raw view count (counting changed 31 March
+    2025). 30-45s sweet spot for "how I handle X" difficult-dog or technique content.
